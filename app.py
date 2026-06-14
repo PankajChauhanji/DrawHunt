@@ -29,7 +29,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-7s %(name)s  %(message)s",
 )
-log = logging.getLogger("pictionary")
+log = logging.getLogger("draw_hunt")
 
 
 def create_app():
@@ -96,5 +96,5 @@ if __name__ == "__main__":
     # this block does not run (see Procfile / README).
     port = int(os.environ.get("PORT", "5000"))
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
-    log.info("starting Pictionary server on http://localhost:%d", port)
+    log.info("starting draw_hunt server on http://localhost:%d", port)
     socketio.run(app, host="0.0.0.0", port=port, debug=debug)

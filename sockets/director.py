@@ -20,7 +20,7 @@ from game import scoring, words
 from game.manager import room_manager
 from sockets.common import broadcast_room
 
-log = logging.getLogger("pictionary.director")
+log = logging.getLogger("draw_hunt.director")
 
 TICK = 0.25
 

@@ -28,7 +28,7 @@ from config import Config
 from game.manager import room_manager
 from sockets.common import broadcast_room
 
-log = logging.getLogger("pictionary.lobby")
+log = logging.getLogger("draw_hunt.lobby")
 
 
 def register(socketio):

@@ -15,7 +15,7 @@ from flask import request
 
 from game.manager import room_manager
 
-log = logging.getLogger("pictionary.connection")
+log = logging.getLogger("draw_hunt.connection")
 
 
 def register(socketio):

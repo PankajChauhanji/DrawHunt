@@ -29,7 +29,7 @@ from flask_socketio import emit
 from config import Config
 from game.manager import room_manager
 
-log = logging.getLogger("pictionary.drawing")
+log = logging.getLogger("draw_hunt.drawing")
 
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 

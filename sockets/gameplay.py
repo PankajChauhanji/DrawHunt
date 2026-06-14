@@ -32,7 +32,7 @@ from config import Config
 from game.manager import room_manager
 from sockets.common import broadcast_room
 
-log = logging.getLogger("pictionary.gameplay")
+log = logging.getLogger("draw_hunt.gameplay")
 
 CHAT_MAX_LEN = 200
 WORD_MAX_LEN = 40

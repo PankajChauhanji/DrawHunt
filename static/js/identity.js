@@ -8,8 +8,8 @@
 window.Identity = (function () {
   "use strict";
 
-  const UID_KEY = "inkling_uid";
-  const NAME_KEY = "inkling_name";
+  const UID_KEY = "draw_hunt_uid";
+  const NAME_KEY = "draw_hunt_name";
 
   function getUserId() {
     let id = localStorage.getItem(UID_KEY);

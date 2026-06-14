@@ -1,5 +1,5 @@
 /* ============================================================
-   Inkling — Phase 0 client
+   draw_hunt — Phase 0 client
    Opens the Socket.IO connection and reflects its state in the UI.
    This is the browser half of the "connect / disconnect fire" check.
    ============================================================ */
