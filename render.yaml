@@ -2,7 +2,7 @@
 # Docs: https://render.com/docs/blueprint-spec
 services:
   - type: web
-    name: pictionary
+    name: draw_hunt
     runtime: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
@@ -16,4 +16,4 @@ services:
       - key: SECRET_KEY
         generateValue: true        # Render generates a strong random value
       - key: CORS_ORIGINS
-        sync: false                # set to your service URL after first deploy, e.g. https://pictionary.onrender.com
+        sync: false                # set to your service URL after first deploy, e.g. https://draw_hunt.onrender.com
