@@ -1,6 +1,6 @@
-# Inkling — a real-time draw & guess game
+# DrawHunt — a real-time draw & guess game
 
-A multiplayer Pictionary-style game built with **Flask** and **Flask-SocketIO**.
+A multiplayer draw_hunt game built with **Flask** and **Flask-SocketIO**.
 One player draws a chosen word; everyone else races to guess it in chat. Rooms
 hold up to 10 players and run for a configurable number of rounds.
 
@@ -20,7 +20,7 @@ hold up to 10 players and run for a configurable number of rounds.
 Requires Python 3.10+ (3.12 recommended).
 
 ```bash
-cd pictionary
+cd draw_hunt
 python -m venv venv && source venv/bin/activate    # optional but recommended
 pip install -r requirements.txt
 python app.py
@@ -148,7 +148,7 @@ socket id), which is what makes refresh and reconnect work seamlessly.
 ## Project structure
 
 ```
-pictionary/
+draw_hunt/
 ├── app.py              # entrypoint: Flask + SocketIO init, routes, handler registration
 ├── config.py           # all tunable constants + env-driven settings
 ├── requirements.txt
