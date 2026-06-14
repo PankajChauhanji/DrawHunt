@@ -317,9 +317,12 @@
     });
 
     socket.on("choosing", function (d) {
+      // The drawer keeps their word-choice popup (driven by your_turn); this
+      // event is only to tell the OTHER players who is choosing.
+      if (d.drawer_id === myUid) return;
       hideOverlay();
       stopTimer();
-      if (d.drawer_id !== myUid && wordBar) {
+      if (wordBar) {
         wordBar.classList.remove("is-drawer");
         wordBar.textContent = d.drawer_name + " is choosing a word…";
       }
@@ -352,14 +355,34 @@
       stopTimer();
       setDrawer(false);
       const isHost = lastState && lastState.host_id === myUid;
-      const medals = ["🥇", "🥈", "🥉"];
-      const list = (d.scores || []).map(function (p, i) {
-        return "<div class='final-row'><span class='rank'>" + (medals[i] || (i + 1) + ".") +
-          "</span><span class='final-name'>" + escapeHtml(p.name) +
-          "</span><span class='final-score'>" + p.score + "</span></div>";
-      }).join("");
+      const scores = d.scores || [];
+      const top = scores.slice(0, 3);
+      const rest = scores.slice(3);
+
+      // podium: 2nd | 1st | 3rd, ordered so the winner is centre + tallest
+      const podiumOrder = [top[1], top[0], top[2]];
+      const heights = ["mid", "high", "low"];
+      const medals = ["🥈", "🥇", "🥉"];
+      const podium = '<div class="podium">' + podiumOrder.map(function (p, i) {
+        if (!p) return "";
+        return '<div class="pod ' + heights[i] + (p.user_id === myUid ? " me" : "") + '">' +
+          '<span class="pod-medal">' + medals[i] + "</span>" +
+          '<span class="pod-name">' + escapeHtml(p.name) + "</span>" +
+          '<span class="pod-score">' + p.score + "</span>" +
+          '<span class="pod-base"></span></div>';
+      }).join("") + "</div>";
+
+      const list = rest.length
+        ? '<div class="final-list">' + rest.map(function (p, i) {
+            return '<div class="final-row' + (p.user_id === myUid ? " me" : "") + '">' +
+              '<span class="rank">' + (i + 4) + ".</span>" +
+              '<span class="final-name">' + escapeHtml(p.name) + "</span>" +
+              '<span class="final-score">' + p.score + "</span></div>";
+          }).join("") + "</div>"
+        : "";
+
       overlayBody.innerHTML =
-        "<h2>Final scores</h2><div class='final-list'>" + list + "</div>" +
+        '<h2>Game over!</h2>' + podium + list +
         (isHost
           ? "<button id='play-again' class='btn btn-primary'>Play again</button>" +
             "<button id='to-lobby' class='btn btn-ghost'>Back to lobby</button>"

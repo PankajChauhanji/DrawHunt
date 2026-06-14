@@ -83,7 +83,9 @@ def register(socketio):
 
             # 1. correct guess by someone still guessing
             if not in_know and normalized == target:
-                if room.register_correct_guess(user_id):
+                import time as _t
+                elapsed = max(0.0, _t.time() - room.turn_started_at) if room.turn_started_at else 0.0
+                if room.register_correct_guess(user_id, elapsed):
                     log.info("%s guessed the word in room %s", player.name, code)
                     # flip green for everyone (room_update carries has_guessed, NOT the word)
                     broadcast_room(socketio, room)

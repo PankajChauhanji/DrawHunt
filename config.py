@@ -43,10 +43,9 @@ class Config:
     ROUND_END_PAUSE = 6                   # seconds the word-reveal screen shows
     DRAWER_DISCONNECT_GRACE = 4           # seconds a drawer can drop before the turn ends
 
-    # Scoring (Phase 4 baseline; Phase 5 refines the formula + end screen).
-    GUESS_BASE = 100                      # points for the first correct guesser
-    GUESS_DECREMENT = 12                  # less for each later guesser
-    GUESS_MIN = 45                        # floor for correct guessers
+    # Scoring (Phase 5: time-based — faster correct guesses score more).
+    GUESS_CEIL = 100                      # points for an instant guess (full time left)
+    GUESS_FLOOR = 40                      # points for a last-second guess
     DRAWER_MAX = 55                       # max drawer bonus (scaled by how many guessed)
 
     # Settings the host may change, with the allowed values (server-enforced).

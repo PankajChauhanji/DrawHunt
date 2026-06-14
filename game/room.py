@@ -39,7 +39,8 @@ class Room:
         # real word privately.
         self.current_word: str | None = None
         self.drawer_id: str | None = None
-        self.guessed_order: list[str] = []   # user_ids in the order they guessed (for Phase 5 scoring)
+        self.guessed_order: list[str] = []   # user_ids in the order they guessed
+        self.guess_times: dict[str, float] = {}   # user_id -> seconds into the turn when they guessed
 
         # ---- game loop (Phase 4) ----
         self.total_rounds = 0
@@ -150,6 +151,7 @@ class Room:
         self.current_word = word
         self.drawer_id = drawer_id
         self.guessed_order = []
+        self.guess_times = {}
         for p in self.players.values():
             p.has_guessed = False
             p.is_drawer = (p.user_id == drawer_id)
@@ -158,18 +160,21 @@ class Room:
         self.current_word = None
         self.drawer_id = None
         self.guessed_order = []
+        self.guess_times = {}
         for p in self.players.values():
             p.has_guessed = False
             p.is_drawer = False
 
-    def register_correct_guess(self, user_id: str) -> bool:
-        """Mark a player as having guessed. Returns False if they already had
+    def register_correct_guess(self, user_id: str, elapsed: float = 0.0) -> bool:
+        """Mark a player as having guessed, recording how long into the turn it
+        took (for time-based scoring). Returns False if they already had guessed
         (so a duplicate correct message can't be scored or announced twice)."""
         p = self.players.get(user_id)
         if p is None or p.has_guessed or p.is_drawer:
             return False
         p.has_guessed = True
         self.guessed_order.append(user_id)
+        self.guess_times[user_id] = max(0.0, elapsed)
         return True
 
     def masked_word(self) -> str:

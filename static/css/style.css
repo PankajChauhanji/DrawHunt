@@ -125,9 +125,22 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 /* final leaderboard */
 .final-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
 .final-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.7rem; background: var(--ink-soft); border-radius: 10px; }
+.final-row.me { outline: 1.5px solid var(--green); }
 .final-row .rank { font-size: 1.1rem; width: 1.8rem; }
 .final-name { flex: 1; text-align: left; font-size: 0.98rem; }
 .final-score { font-family: "Fredoka", sans-serif; color: var(--amber); }
+
+/* podium */
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 0.5rem; margin: 0.6rem 0 0.8rem; min-height: 150px; }
+.pod { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.15rem; width: 84px; }
+.pod-medal { font-size: 1.5rem; }
+.pod-name { font-size: 0.82rem; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pod-score { font-family: "Fredoka", sans-serif; color: var(--amber); font-size: 0.9rem; }
+.pod-base { width: 100%; border-radius: 8px 8px 0 0; background: var(--ink-soft); border: 1px solid var(--line); border-bottom: none; }
+.pod.high .pod-base { height: 86px; background: linear-gradient(180deg, rgba(245,177,76,0.35), var(--ink-soft)); }
+.pod.mid .pod-base { height: 58px; }
+.pod.low .pod-base { height: 38px; }
+.pod.me .pod-name { color: var(--green); font-weight: 600; }
 
 @media (max-width: 620px) { .lobby { grid-template-columns: 1fr; } }
 
