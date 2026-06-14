@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inkling — draw & guess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fredoka:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="landing">
+  <main class="card">
+    <div class="brand">
+      <span class="blot"></span>
+      <h1>Inkling</h1>
+    </div>
+    <p class="tagline">someone draws, everyone guesses</p>
+
+    <label class="field-label" for="name-input">Your name</label>
+    <input id="name-input" class="field" maxlength="20" placeholder="e.g. Sam" autocomplete="off" />
+
+    <button id="create-btn" class="btn btn-primary">Create a room</button>
+
+    <div class="divider"><span>or join one</span></div>
+
+    <div class="join-row">
+      <input id="code-input" class="field code-field" maxlength="4" placeholder="CODE" autocomplete="off" />
+      <button id="join-btn" class="btn btn-ghost">Join</button>
+    </div>
+
+    <p id="landing-error" class="error" role="alert"></p>
+    <p class="footnote">share the room code with friends — up to 10 can play</p>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/identity.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body>
+</html>

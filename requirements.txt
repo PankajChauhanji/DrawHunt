@@ -1,0 +1,4 @@
+Flask==3.0.3
+Flask-SocketIO==5.4.1
+eventlet==0.37.0
+gunicorn==23.0.0

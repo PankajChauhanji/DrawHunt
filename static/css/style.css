@@ -1,0 +1,116 @@
+/* ============================================================
+   Inkling — Phase 1 styles (landing + lobby)
+   Identity: inky dark paper, warm light text, marker accents.
+   Display = Fredoka, doodle accent = Caveat, body = Inter.
+   ============================================================ */
+:root {
+  --ink:      #16161d;
+  --ink-soft: #1e1e28;
+  --panel:    #20212c;
+  --paper:    #f3f1ea;
+  --muted:    #8a8a99;
+  --green:    #36d399;
+  --amber:    #f5b14c;
+  --coral:    #ff5d5d;
+  --line:     rgba(243, 241, 234, 0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: radial-gradient(120% 90% at 50% 0%, var(--ink-soft) 0%, var(--ink) 60%);
+  color: var(--paper);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* ---------- brand ---------- */
+.blot {
+  width: 22px; height: 22px; display: inline-block;
+  background: var(--green);
+  border-radius: 49% 51% 52% 48% / 50% 49% 51% 50%;
+  box-shadow: 0 0 18px -4px var(--green);
+}
+.blot.sm { width: 14px; height: 14px; }
+.brand { display: flex; align-items: center; gap: 0.6rem; justify-content: center; }
+.brand h1 { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 2rem; }
+
+/* ---------- buttons / fields ---------- */
+.btn {
+  font-family: "Fredoka", sans-serif; font-weight: 500; font-size: 1rem;
+  border: none; border-radius: 999px; padding: 0.75rem 1.4rem; cursor: pointer;
+  transition: transform 120ms ease, opacity 200ms ease;
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+.btn-primary { background: var(--paper); color: var(--ink); width: 100%; }
+.btn-ghost { background: transparent; color: var(--paper); border: 1.5px solid var(--line); }
+.btn.small { padding: 0.45rem 1rem; font-size: 0.85rem; }
+
+.field {
+  width: 100%; background: var(--ink-soft); color: var(--paper);
+  border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 0.7rem 0.9rem; font-size: 1rem; font-family: inherit;
+}
+.field:focus { outline: none; border-color: var(--green); }
+.field-label { font-size: 0.78rem; color: var(--muted); margin: 0.2rem 0 0.35rem; display: block; }
+
+/* ---------- landing ---------- */
+.landing { display: grid; place-items: center; padding: 2rem; }
+.card {
+  width: min(400px, 100%); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 22px;
+  padding: 2rem 1.75rem; display: flex; flex-direction: column; gap: 0.75rem;
+}
+.tagline { font-family: "Caveat", cursive; font-size: 1.35rem; color: var(--muted); text-align: center; margin-bottom: 0.5rem; }
+.divider { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.8rem; margin: 0.4rem 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.join-row { display: flex; gap: 0.5rem; }
+.code-field { text-transform: uppercase; letter-spacing: 0.25em; text-align: center; font-family: "Fredoka", sans-serif; }
+.join-row .btn { width: auto; }
+.error { color: var(--coral); font-size: 0.85rem; min-height: 1.1rem; text-align: center; }
+.footnote { font-size: 0.75rem; color: var(--muted); text-align: center; }
+
+/* ---------- room / lobby ---------- */
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.brand-sm { font-family: "Fredoka", sans-serif; display: flex; align-items: center; gap: 0.45rem; }
+.conn-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); display: inline-block; transition: background 250ms ease, box-shadow 250ms ease; }
+body[data-conn="connecting"]   .conn-dot { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+body[data-conn="connected"]    .conn-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
+body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow: 0 0 10px var(--coral); }
+
+.lobby { max-width: 760px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; display: grid; gap: 1.25rem; grid-template-columns: 1fr 1fr; }
+.code-stamp { grid-column: 1 / -1; text-align: center; padding: 1.25rem; background: var(--panel); border: 1px dashed var(--line); border-radius: 18px; }
+.code-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.code-value { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 2.6rem; letter-spacing: 0.35em; margin: 0.2rem 0 0.6rem; padding-left: 0.35em; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 1.1rem 1.2rem; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.8rem; }
+.panel-head h2 { font-family: "Fredoka", sans-serif; font-weight: 500; font-size: 1.1rem; }
+.count { font-size: 0.85rem; color: var(--muted); }
+
+.players { display: flex; flex-direction: column; gap: 0.5rem; }
+.player { display: flex; align-items: center; gap: 0.6rem; }
+.player.offline { opacity: 0.4; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: "Fredoka", sans-serif; font-size: 0.85rem; color: #16161d; flex: none; }
+.pname { flex: 1; font-size: 0.95rem; }
+.tags { display: flex; gap: 0.35rem; }
+.tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.12rem 0.45rem; border-radius: 999px; }
+.tag.host { background: var(--amber); color: #16161d; }
+.tag.you { border: 1px solid var(--line); color: var(--muted); }
+
+.setting { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.8rem; }
+.setting label { font-size: 0.8rem; color: var(--muted); }
+.settings-note { font-family: "Caveat", cursive; font-size: 1.05rem; color: var(--muted); min-height: 1.2rem; margin-bottom: 0.6rem; }
+.wait-note { font-family: "Caveat", cursive; font-size: 1.15rem; color: var(--muted); text-align: center; }
+.settings-panel .btn-primary { margin-top: 0.2rem; }
+
+/* ---------- overlay ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(10,10,14,0.72); display: none; place-items: center; padding: 1.5rem; z-index: 10; }
+.overlay.show { display: grid; }
+.overlay-card { width: min(380px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 1.75rem; text-align: center; display: flex; flex-direction: column; gap: 0.85rem; }
+.overlay-card h2 { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.5rem; }
+.overlay-sub { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+
+@media (max-width: 620px) { .lobby { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

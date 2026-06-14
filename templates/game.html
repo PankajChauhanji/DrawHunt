@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inkling — room {{ room_code }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fredoka:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="room" data-conn="connecting">
+  <header class="topbar">
+    <span class="brand-sm"><span class="blot sm"></span> Inkling</span>
+    <span class="conn" title="connection"><span id="conn-dot" class="conn-dot"></span></span>
+  </header>
+
+  <main class="lobby">
+    <section class="code-stamp">
+      <p class="code-label">room code</p>
+      <p id="room-code" class="code-value">····</p>
+      <button id="copy-btn" class="btn btn-ghost small">Copy code</button>
+    </section>
+
+    <section class="panel players-panel">
+      <div class="panel-head">
+        <h2>Players</h2>
+        <span id="player-count" class="count">0/{{ max_players }}</span>
+      </div>
+      <div id="players" class="players"></div>
+    </section>
+
+    <section class="panel settings-panel">
+      <div class="panel-head"><h2>Game settings</h2></div>
+      <div class="setting">
+        <label for="rounds-select">Rounds</label>
+        <select id="rounds-select" class="field">
+          {% for r in allowed_rounds %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="setting">
+        <label for="duration-select">Seconds per turn</label>
+        <select id="duration-select" class="field">
+          {% for d in allowed_durations %}<option value="{{ d }}">{{ d }}s</option>{% endfor %}
+        </select>
+      </div>
+      <p id="settings-note" class="settings-note"></p>
+
+      <button id="start-btn" class="btn btn-primary" style="display:none">Start game</button>
+      <p id="wait-note" class="wait-note" style="display:none">Waiting for the host to start…</p>
+    </section>
+  </main>
+
+  <div id="overlay" class="overlay">
+    <div id="overlay-body" class="overlay-card"></div>
+  </div>
+
+  <script>
+    window.INKLING = {
+      code: "{{ room_code }}",
+      minPlayers: {{ min_players }},
+      maxPlayers: {{ max_players }}
+    };
+  </script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='js/identity.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+</body>
+</html>
