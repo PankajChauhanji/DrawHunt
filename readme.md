@@ -1,169 +1,150 @@
-# DrawHunt — a real-time draw & guess game
+# 🎨 DrawHunt — Real-Time Multiplayer Draw & Guess Game
 
-A multiplayer draw_hunt game built with **Flask** and **Flask-SocketIO**.
-One player draws a chosen word; everyone else races to guess it in chat. Rooms
-hold up to 10 players and run for a configurable number of rounds.
+DrawHunt is a fast-paced, real-time multiplayer draw-and-guess game built on **Flask** and **Flask-SocketIO**. One player draws a chosen secret word on a shared canvas while everyone else races against the clock to crack the code in live chat. 
 
-![Home Page](images/starter.png)
-![Game Lobby](images/player_lobby.png)
+---
 
-## Features
+### 🚀 Experience the Game Live!
 
-- Create or join a room with a short 4-letter code (up to 10 players)
-- Turn-based drawing with a shared HTML5 canvas (colors, brush sizes, eraser, undo, clear)
-- Low-latency stroke relay: vector segments batched per animation frame, not images
-- Live chat with server-side guess detection — a correct guess never leaks the word to others
-- Full game loop: word choice (10s, auto-picks if you wait too long), drawer rotation, per-turn timer
-- Progressive **hints**: letters reveal over time (~30% of the word, spread across the turn)
-- Time-based scoring (faster guesses score more) with a drawer bonus, and a podium finish
-- Survives refreshes and reconnects mid-game; host migrates if the host leaves
+The game is deployed and ready to play right now. Gather a friend, open two tabs, and jump in!
 
-## Quick start (local)
+[![Live Demo](https://img.shields.io/badge/PLAY_NOW-Live_on_Render-6706ce?style=for-the-badge&logo=render&logoColor=white)](https://draw-hunt.onrender.com/)
 
-Requires Python 3.10+ (3.12 recommended).
+> **💡 Feedback & Contributions:** This project is actively evolving! If you explore the live app and encounter any bugs, have UX suggestions, or think of cool feature ideas, please open an **Issue** or submit a **Pull Request**. Your feedback helps make DrawHunt better!
 
-```bash
-cd draw_hunt
-python -m venv venv && source venv/bin/activate    # optional but recommended
-pip install -r requirements.txt
-python app.py
+---
+
+## 📸 Gameplay Preview
+
+| Welcome Lobby | Live Game Session |
+| :---: | :---: |
+| ![Home Page](images/starter.png) | ![Game Lobby](images/player_lobby.png) |
+
+---
+
+## ✨ Features
+
+* **Instant Rooms:** Create or join a custom lobby using a quick 4-letter room code (supports up to 10 simultaneous players).
+* **Vector Canvas Engine:** Smooth, turn-based drawing utilizing a shared HTML5 canvas. Complete with customizable colors, adjustable brush sizes, an eraser, undo functionality, and quick-clear.
+* **Low-Latency Performance:** Stroke data is batched and relayed via pure vector segments per animation frame, bypassing heavy image transfers entirely.
+* **Smart Chat & Guess Detection:** Live chat with server-side processing. Correct guesses are intercepted instantly, meaning the secret word never leaks to other players.
+* **Complete Game Loop:** Managed 10-second word choices (with auto-pick fallbacks), automated drawer rotation, and per-turn countdown timers.
+* **Dynamic Letter Hints:** Progressive hints reveal letters over time (around 30% of the word) spaced evenly across the turn duration.
+* **Competitive Scoring:** Time-based scoring rewarding faster guesses. Drawers receive scale bonuses based on how many players guessed correctly, leading up to an animated podium finish.
+* **Robust Reconnections:** Players are bound to stable client-generated identities, ensuring they seamlessly survive accidental page refreshes mid-game. Lobbies feature active host-migration if the original creator drops.
+
+---
+
+## 🏗️ High-Level Project Structure
+
+```text
+draw_hunt/
+├── app.py              # Application entrypoint (Flask + SocketIO orchestration)
+├── config.py           # Single-source configuration (tunable constants + environment variables)
+├── render.yaml         # Automated Render Blueprint deployment spec
+├── Procfile            # Deployment routing instructions for platform runtimes
+├── requirements.txt    # Application dependencies
+├── game/               # Pure, decoupled domain & game logic (Networking-free)
+│   ├── manager.py      # Global room state orchestration
+│   ├── player.py       # Player profiles and identity tracking
+│   ├── room.py         # Room lifecycles, rounds, and turn states
+│   ├── scoring.py      # Time-sensitive point calculations
+│   └── words.py        # Word banks and selector logic
+├── sockets/            # Real-time WebSocket connection handling layers
+│   ├── common.py       # Shared payload decorators & event exceptions
+│   ├── director.py     # Background loop runner managing turns/clocks
+│   └── [connection/drawing/gameplay/lobby].py  # Event-specific socket handlers
+├── static/             # Client-side front-end engine
+│   ├── css/            # UI styles and typography layout
+│   └── js/             # Modular front-end controls (canvas mechanics, chat, socket listeners)
+├── templates/          # Jinja2 views (Landing Page & Dynamic Game UI)
+└── images/             # Visual assets and README documentation graphics
 ```
 
-Open http://localhost:5000. To play solo-test, open a second browser window in
-incognito (so it gets a different identity), create a room in one, copy the
-code, and join from the other. You need at least 2 players to start.
+---
 
-## How to play
+## 🛠️ Quick Start (Local Setup)
 
-1. One player **creates a room** and shares the 4-letter code.
-2. Others **join with the code** and a name. Everyone lands in a lobby.
-3. The **host** sets rounds and seconds-per-turn, then starts the game.
-4. Each turn, the drawer **picks one of three words** within 10 seconds (it
-   auto-picks if they don't). They draw; everyone else types guesses in chat.
-5. Guess correctly to score — sooner is worth more. The drawer earns a bonus
-   based on how many players guess.
-6. After every player has drawn each round, a **podium** shows the final scores.
+Requires Python 3.10 or higher (Python 3.12 is highly recommended).
 
-## Configuration
+1. **Clone the repository and jump in:**
+   ```bash
+   git clone [https://github.com/your-username/draw_hunt.git](https://github.com/your-username/draw_hunt.git)
+   cd draw_hunt
+   ```
+2. **Spin up a virtual environment & install packages:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+3. **Boot up the server:**
+   ```bash
+   python app.py
+   ```
+4. **Test it locally:** Open `http://localhost:5000`. To test multiplayer functionality solo, open a second browser window in **Incognito Mode** so it generates a separate player identity. Copy your 4-letter room code, join, and start the game!
 
-All gameplay constants live in `config.py` (rounds, durations, scoring weights,
-hint fraction, cleanup timings) — tune them in one place. Runtime settings come
-from environment variables (see `.env.example`):
+---
 
-| Variable | Purpose | Default |
+## 🎮 How to Play
+
+1. **Host a Room:** Click "Create Room", pick a nickname, and share the unique 4-letter room code.
+2. **Gather Players:** Friends join using the room code. Everyone pops up instantly in the live lobby.
+3. **Configure & Launch:** The host adjusts the number of rounds and turn duration, then clicks **Start**.
+4. **Draw & Guess:** When it's your turn, pick 1 of 3 secret words within 10 seconds and start drawing. If you're guessing, watch the canvas closely and type your ideas directly into the live chat.
+5. **Win Points:** The faster you guess, the more points you earn. Drawers score bonuses based on how clear their drawing was to others.
+6. **The Podium:** Once everyone has completed their drawings for the designated rounds, the podium reveals the top 3 master artists.
+
+---
+
+## ⚙️ Configuration & Environment Settings
+
+All gameplay dynamics (round limits, hint frequencies, weights) are isolated cleanly inside `config.py`. Runtime options are fed via environment variables:
+
+| Variable | Purpose | Default / Development Value |
 |---|---|---|
-| `SECRET_KEY` | Signs Flask sessions — set a long random value in production | dev placeholder |
-| `CORS_ORIGINS` | Allowed Socket.IO origins; set to your deployed URL in production | `*` |
-| `PORT` | Port to bind (the host usually provides this) | `5000` |
-| `FLASK_DEBUG` | `1` enables debug/reload locally | `0` |
+| `SECRET_KEY` | Secures Flask sessions (Override with a strong random string in production) | `dev placeholder` |
+| `CORS_ORIGINS` | Protects Socket.IO entry origins (Set to your domain in production) | `*` |
+| `PORT` | Networking port binding configuration | `5000` |
+| `FLASK_DEBUG` | Enables hot-reloading and development stacks | `0` (Disabled) |
 
-## Deploying
+---
 
-This is a stateful WebSocket app, so it needs a host that keeps a **persistent
-process** (not a serverless/static host like Vercel or Netlify). Render,
-Railway, and Fly.io all work.
+## 🌐 Production Deployment
 
-### The one rule that matters: a single worker
+Because DrawHunt is a stateful WebSocket application, it relies on a **persistent background process**. Serverless frameworks (like Vercel or Netlify) are incompatible. Render, Railway, or Fly.io are ideal choices.
 
-Room state lives in memory in **one process**, and gunicorn's load balancer has
-no sticky sessions, so you must run exactly one worker:
+### 🚨 The Non-Negotiable Rule: Single Worker Execution
+Room state is registered entirely inside the system's in-memory engine. Standard WSGI load balancers don't have sticky sessions by default, meaning **you must limit your production configuration to exactly one worker process**:
 
 ```bash
 gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app
 ```
+Using `-w 1` ensures your players stay grouped in the same room registry instead of getting split across conflicting memory processes.
 
-`-w 1` is non-negotiable. Running more workers would scatter players across
-separate in-memory room registries. (Scaling beyond one process is possible but
-requires a Redis message queue and a load balancer with sticky sessions — out of
-scope for a ≤10-player game.)
+### Deploying on Render (Blueprint Deployment)
+1. Commit your codebase to your GitHub repository.
+2. Navigate to Render, select **New → Blueprint**, and link your repository.
+3. Render will immediately ingest your `render.yaml` profile, provision environment dependencies, inject a unique `SECRET_KEY`, and spin up the architecture automatically.
 
-### Render (Blueprint — easiest)
+---
 
-1. Push this folder to a GitHub repo.
-2. In Render: **New → Blueprint**, select the repo. It reads `render.yaml`,
-   which sets the build/start commands, a health check, and a generated
-   `SECRET_KEY`.
-3. After the first deploy, copy your service URL and (optionally) set
-   `CORS_ORIGINS` to it in the service's Environment settings, then redeploy.
-
-### Render (manual) / Railway / generic
-
-- **Build:** `pip install -r requirements.txt`
-- **Start:** `gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app`
-  (platforms that read a `Procfile`, like Railway, will pick it up automatically)
-- Set `SECRET_KEY` (and ideally `CORS_ORIGINS`) as environment variables.
-
-### Fly.io
-
-`fly launch` will detect a Python app; accept the generated config but ensure the
-process command is the gunicorn line above, then `fly deploy`. Fly keeps a small
-always-on allowance, so it avoids the cold starts free Render services have.
-
-### Free-tier behavior to expect
-
-- Free web services **spin down after ~15 minutes** with no inbound traffic
-  (HTTP *or* WebSocket). An active game keeps the service awake; an empty room
-  does not. The next visitor triggers a **~1-minute cold start**.
-- The filesystem is **ephemeral** — fine here, because all state is in memory and
-  intentionally non-persistent (rooms vanish when empty anyway). There is no
-  database, so nothing to lose.
-
-## Architecture (brief)
+## 🧩 Architecture Snapshot
 
 ```
-Browser (canvas + Socket.IO)  <-- WebSocket -->  Flask-SocketIO (single process)
+Browser UI (Canvas rendering + Socket.IO client)
+                     ↕  [ Low-Latency WebSockets ]
+Flask-SocketIO Engine (Single Process App Workspace)
 ```
 
-- `game/` — pure, testable domain logic: `Player`, `Room`, `RoomManager`,
-  `scoring`, `words`. No networking here.
-- `sockets/` — Socket.IO handlers split by concern: `connection`, `lobby`,
-  `drawing`, `gameplay`, plus `director` (the per-game background task that runs
-  the turn/round loop) and `common` helpers.
-- `static/js/` — `canvas` (drawing engine), `board` (toolbar + draw relay),
-  `chat`, `lobby` (room controller), `identity`.
-- The server is the single source of truth: it broadcasts the full room state on
-  every change and never sends the secret word to anyone but the drawer.
+* **Domain Segregation:** The `game/` engine remains completely ignorant of the transport network layer, facilitating easy unit testing.
+* **Networking Hub:** The `sockets/` registry controls asynchronous user states, while `sockets/director.py` runs non-blocking background routines managing the central game clocks.
+* **State-Stability:** Clients are tracked via unique client-side identifiers rather than ephemeral socket IDs, providing high resilience against dropping signals or intentional window refreshes.
 
-Players are keyed by a stable client-generated `user_id` (not the transient
-socket id), which is what makes refresh and reconnect work seamlessly.
+---
 
-## Troubleshooting
+## 🔍 Troubleshooting & Tech Nuances
 
-- **"Eventlet is deprecated" warning on startup.** Harmless — eventlet still
-  works and is the standard async worker for Flask-SocketIO. Two related notes:
-  - `gunicorn` is pinned to `23.0.0` on purpose. **gunicorn 26 removed the
-    bundled `eventlet`/`gevent` workers**, so `--worker-class eventlet` fails
-    there with "Entry point not found." Don't bump gunicorn past 23 without
-    also switching the async model.
-  - If you want off eventlet entirely, Flask-SocketIO also supports the gevent
-    worker (`gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app`)
-    or the threaded worker with `simple-websocket`. Both require switching
-    `async_mode` in `app.py`, removing the eventlet monkey-patch, and — for the
-    threaded path — adding locks around shared room state (eventlet's
-    cooperative scheduling currently makes that unnecessary).
-- **Drawing/chat works locally but not when deployed.** Confirm your host allows
-  WebSockets and that you're running the eventlet worker with `-w 1`. A plain
-  sync worker blocks on the first WebSocket and the app appears frozen.
-- **Players land in "different" empty rooms.** You're running more than one
-  worker. Set `-w 1`.
-- **First visitor waits ~1 minute.** That's the free-tier cold start, not a bug.
-
-## Project structure
-
-```
-draw_hunt/
-├── app.py              # entrypoint: Flask + SocketIO init, routes, handler registration
-├── config.py           # all tunable constants + env-driven settings
-├── requirements.txt
-├── Procfile            # start command for Railway/Heroku-style hosts
-├── render.yaml         # Render Blueprint
-├── .env.example
-├── game/               # domain logic (no networking)
-│   ├── player.py  room.py  manager.py  scoring.py  words.py
-├── sockets/            # Socket.IO handlers
-│   ├── connection.py  lobby.py  drawing.py  gameplay.py  director.py  common.py
-├── static/
-│   ├── css/style.css
-│   └── js/  identity.js  landing.js  lobby.js  canvas.js  board.js  chat.js
-└── templates/  index.html  game.html
-```
+* **Gunicorn Constraints:** The project pins `gunicorn==23.0.0` deliberately. Gunicorn versions 26+ stripped out bundled `eventlet` plugins, which causes unexpected startup exceptions if upgraded blindly.
+* **Free-Tier Wakeups:** If hosted on Render's free tier, the web service will enter a sleeping state after 15 minutes of silence. The first visitor following a sleep window will encounter a **~1-minute cold start** while the instance spins back up.
+* **Disjointed Lobbies:** If players join the exact same code but find themselves sitting in empty, isolated rooms, your production web server is running multiple workers. Double-check your setup to ensure `-w 1` is strictly enforced.
