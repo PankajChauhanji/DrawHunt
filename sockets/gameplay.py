@@ -123,33 +123,21 @@ def register(socketio):
                       {"user_id": user_id, "name": player.name, "message": message},
                       to=code)
 
-    @socketio.on("set_word")
-    def on_set_word(data):
-        """TEMPORARY Phase 3 scaffold: the sender sets a secret word and becomes
-        the drawer so guessing can be tested. Phase 4 replaces this."""
+    @socketio.on("choose_word")
+    def on_choose_word(data):
+        """The drawer picks one of the offered words. The director is waiting in
+        the CHOOSING phase and proceeds once the word is set."""
         lookup = room_manager.lookup_sid(request.sid)
         if not lookup:
-            return emit("room_error", {"message": "You are not in a room."})
+            return
         code, user_id = lookup
         room = room_manager.get_room(code)
-        if room is None or room.state != "DRAWING":
-            return emit("room_error", {"message": "Start the game first."})
-
-        word = (data.get("word") or "").strip()[:WORD_MAX_LEN]
-        if not word:
-            return emit("room_error", {"message": "Enter a word to draw."})
-
-        room.set_word(word, drawer_id=user_id)
-        player = room.get_player(user_id)
-        log.info("test word set in room %s by %s", code, user_id)
-
-        emit("your_word", {"word": word})  # only the drawer learns the word
-        socketio.emit("word_hint",
-                      {"mask": room.masked_word(), "length": len(word),
-                       "drawer_id": user_id},
-                      to=code)
-        socketio.emit("chat",
-                      {"system": True, "kind": "info",
-                       "message": f"{player.name} is drawing now — start guessing!"},
-                      to=code)
-        broadcast_room(socketio, room)  # roster shows drawer badge, greens reset
+        if room is None or room.state != "CHOOSING":
+            return
+        if user_id != room.current_drawer_id():
+            return  # only the current drawer may choose
+        word = (data.get("word") or "").strip()
+        if word not in room.word_choices:
+            return  # must be one of the offered choices
+        room.set_word(word, user_id)
+        log.info("drawer chose a word in room %s", code)

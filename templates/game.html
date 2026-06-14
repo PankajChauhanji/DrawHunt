@@ -53,12 +53,12 @@
 
   <main class="board-wrap" id="board-view" style="display:none">
     <div class="board-head">
-      <span id="word-bar" class="word-bar">·····</span>
+      <div class="head-left">
+        <span id="round-badge" class="round-badge"></span>
+        <span id="word-bar" class="word-bar">·····</span>
+      </div>
       <div class="head-actions">
-        <div id="host-word-tools" class="host-word-tools" style="display:none">
-          <input id="word-input" class="field tiny" maxlength="40" placeholder="secret word (test)" autocomplete="off" />
-          <button id="set-word-btn" class="btn btn-ghost small">Set word</button>
-        </div>
+        <span id="timer" class="timer"></span>
         <button id="back-to-lobby" class="btn btn-ghost small" style="display:none">Back to lobby</button>
       </div>
     </div>

@@ -39,6 +39,16 @@ class Config:
     ROUND_DURATION = 80                   # seconds a drawer gets per turn
     WORD_CHOICES = 3                      # options offered to the drawer
 
+    CHOOSE_DURATION = 15                  # seconds the drawer has to pick a word
+    ROUND_END_PAUSE = 6                   # seconds the word-reveal screen shows
+    DRAWER_DISCONNECT_GRACE = 4           # seconds a drawer can drop before the turn ends
+
+    # Scoring (Phase 4 baseline; Phase 5 refines the formula + end screen).
+    GUESS_BASE = 100                      # points for the first correct guesser
+    GUESS_DECREMENT = 12                  # less for each later guesser
+    GUESS_MIN = 45                        # floor for correct guessers
+    DRAWER_MAX = 55                       # max drawer bonus (scaled by how many guessed)
+
     # Settings the host may change, with the allowed values (server-enforced).
     ALLOWED_ROUNDS = [1, 2, 3, 4, 5, 6, 7, 8]
     ALLOWED_DURATIONS = [40, 60, 80, 120]

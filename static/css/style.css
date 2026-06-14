@@ -112,11 +112,33 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 .overlay-card h2 { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.5rem; }
 .overlay-sub { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
 
+/* word choices */
+.choice-row { display: flex; flex-direction: column; gap: 0.5rem; }
+.choice-row .choice { width: 100%; text-transform: capitalize; }
+
+/* turn-end reveal */
+.reveal-word { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 2rem; color: var(--green); text-transform: capitalize; margin: 0.2rem 0; }
+.award-row { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; }
+.award { display: flex; justify-content: space-between; font-size: 0.95rem; padding: 0.25rem 0.6rem; background: var(--ink-soft); border-radius: 8px; }
+.award .pts { color: var(--green); font-family: "Fredoka", sans-serif; }
+
+/* final leaderboard */
+.final-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
+.final-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.7rem; background: var(--ink-soft); border-radius: 10px; }
+.final-row .rank { font-size: 1.1rem; width: 1.8rem; }
+.final-name { flex: 1; text-align: left; font-size: 0.98rem; }
+.final-score { font-family: "Fredoka", sans-serif; color: var(--amber); }
+
 @media (max-width: 620px) { .lobby { grid-template-columns: 1fr; } }
 
 /* ---------- drawing board ---------- */
 .board-wrap { max-width: 1060px; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
 .board-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.head-left { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.round-badge { font-family: "Fredoka", sans-serif; font-size: 0.8rem; color: var(--ink); background: var(--paper); padding: 0.2rem 0.7rem; border-radius: 999px; }
+.round-badge:empty { display: none; }
+.timer { font-family: "Fredoka", sans-serif; font-size: 1.05rem; color: var(--muted); min-width: 3.5rem; text-align: right; }
+.timer.low { color: var(--coral); }
 .word-bar {
   font-family: "Fredoka", sans-serif; font-size: 1.25rem; letter-spacing: 0.12em;
   color: var(--paper); padding: 0.3rem 0.2rem; min-height: 1.6rem;

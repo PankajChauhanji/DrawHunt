@@ -31,14 +31,15 @@
   const backBtn = document.getElementById("back-to-lobby");
   const sidePlayersEl = document.getElementById("side-players");
   const wordBar = document.getElementById("word-bar");
-  const hostWordTools = document.getElementById("host-word-tools");
-  const wordInput = document.getElementById("word-input");
-  const setWordBtn = document.getElementById("set-word-btn");
+  const roundBadge = document.getElementById("round-badge");
+  const timerEl = document.getElementById("timer");
+  const toolbarEl = document.querySelector(".toolbar");
   let boardCtl = null;          // BoardView instance (lazy-initialised once)
   let chatCtl = null;           // ChatView instance
   let boardReady = false;
   let lastState = null;         // most recent room snapshot
   let amDrawer = false;         // do I hold the word this turn?
+  let timerHandle = null;       // countdown interval
 
   codeEl.textContent = cfg.code;
 
@@ -165,16 +166,28 @@
       waitNote.textContent = "Waiting for the host to start…";
     }
 
-    // ---- view switch: lobby vs drawing board ----
-    if (state.state === "DRAWING") {
+    // ---- view switch: lobby vs in-game board ----
+    const inGame = (state.state === "CHOOSING" || state.state === "DRAWING" ||
+                    state.state === "ROUND_END" || state.state === "GAME_END");
+    if (inGame) {
       showBoard(isHost);
       renderSidePlayers(state);
-      hostWordTools.style.display = isHost ? "" : "none";
+      if (roundBadge) {
+        roundBadge.textContent = state.total_rounds
+          ? "Round " + state.round + "/" + state.total_rounds : "";
+      }
+      // If we arrive in CHOOSING (e.g. as a late joiner) and we're not the
+      // drawer, reflect that someone is choosing.
+      if (state.state === "CHOOSING" && state.drawer_id !== myUid) {
+        const d = state.players.find(function (p) { return p.user_id === state.drawer_id; });
+        if (wordBar) wordBar.textContent = (d ? d.name : "Someone") + " is choosing a word…";
+      }
     } else {
       showLobby();
-      // back in the lobby: reset per-turn UI
       amDrawer = false;
+      stopTimer();
       if (wordBar) wordBar.textContent = "·····";
+      if (roundBadge) roundBadge.textContent = "";
     }
   }
 
@@ -216,6 +229,35 @@
     overlay.classList.add("show");
   }
 
+  // ---- per-turn timer (visual only; the server is authoritative) ----
+  function startTimer(seconds) {
+    stopTimer();
+    let left = Math.max(0, Math.round(seconds));
+    function tick() {
+      if (timerEl) {
+        timerEl.textContent = "⏱ " + left + "s";
+        timerEl.classList.toggle("low", left <= 10);
+      }
+      if (left <= 0) { stopTimer(); return; }
+      left -= 1;
+    }
+    tick();
+    timerHandle = setInterval(tick, 1000);
+  }
+  function stopTimer() {
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+    if (timerEl) { timerEl.textContent = ""; timerEl.classList.remove("low"); }
+  }
+
+  function hideOverlay() { overlay.classList.remove("show"); }
+
+  // Enable/disable drawing for this client and show the toolbar only to the drawer.
+  function setDrawer(isDrawer) {
+    amDrawer = isDrawer;
+    if (boardCtl) boardCtl.setEnabled(isDrawer);
+    if (toolbarEl) toolbarEl.style.visibility = isDrawer ? "visible" : "hidden";
+  }
+
   // ---- socket ----
   let socket;
   function connect() {
@@ -236,19 +278,97 @@
     socket.on("room_update", render);
 
     // ---- word state (Phase 3) ----
+    // ---- word state ----
     socket.on("your_word", function (d) {
-      amDrawer = true;
+      setDrawer(true);
       if (wordBar) {
         wordBar.textContent = "You're drawing: " + d.word;
         wordBar.classList.add("is-drawer");
       }
     });
     socket.on("word_hint", function (d) {
-      amDrawer = false;
+      setDrawer(false);
       if (wordBar) {
         wordBar.textContent = d.mask || "·····";
         wordBar.classList.remove("is-drawer");
       }
+    });
+
+    // ---- game loop (Phase 4) ----
+    socket.on("your_turn", function (d) {
+      // I'm the drawer — pick a word.
+      stopTimer();
+      if (wordBar) { wordBar.textContent = "Your turn — pick a word!"; wordBar.classList.remove("is-drawer"); }
+      const btns = d.choices.map(function (w) {
+        return '<button class="btn btn-primary choice" data-word="' +
+          w.replace(/"/g, "&quot;") + '">' + escapeHtml(w) + "</button>";
+      }).join("");
+      overlayBody.innerHTML =
+        '<h2>Choose a word to draw</h2>' +
+        '<p class="overlay-sub">Round ' + d.round + " of " + d.total_rounds + "</p>" +
+        '<div class="choice-row">' + btns + "</div>";
+      overlay.classList.add("show");
+      overlayBody.querySelectorAll(".choice").forEach(function (b) {
+        b.addEventListener("click", function () {
+          socket.emit("choose_word", { word: b.dataset.word });
+          hideOverlay();
+        });
+      });
+    });
+
+    socket.on("choosing", function (d) {
+      hideOverlay();
+      stopTimer();
+      if (d.drawer_id !== myUid && wordBar) {
+        wordBar.classList.remove("is-drawer");
+        wordBar.textContent = d.drawer_name + " is choosing a word…";
+      }
+    });
+
+    socket.on("turn_start", function (d) {
+      hideOverlay();
+      setDrawer(d.drawer_id === myUid);
+      startTimer(d.duration);
+    });
+
+    socket.on("turn_end", function (d) {
+      stopTimer();
+      setDrawer(false);
+      const rows = (function () {
+        if (!d.awards || !Object.keys(d.awards).length) return "<p class='overlay-sub'>Nobody guessed it.</p>";
+        const names = {};
+        (lastState ? lastState.players : []).forEach(function (p) { names[p.user_id] = p.name; });
+        return "<div class='award-row'>" + Object.keys(d.awards).map(function (uid) {
+          return "<div class='award'><span>" + escapeHtml(names[uid] || "?") +
+            "</span><span class='pts'>+" + d.awards[uid] + "</span></div>";
+        }).join("") + "</div>";
+      })();
+      overlayBody.innerHTML =
+        "<h2>The word was</h2><p class='reveal-word'>" + escapeHtml(d.word || "") + "</p>" + rows;
+      overlay.classList.add("show");
+    });
+
+    socket.on("game_end", function (d) {
+      stopTimer();
+      setDrawer(false);
+      const isHost = lastState && lastState.host_id === myUid;
+      const medals = ["🥇", "🥈", "🥉"];
+      const list = (d.scores || []).map(function (p, i) {
+        return "<div class='final-row'><span class='rank'>" + (medals[i] || (i + 1) + ".") +
+          "</span><span class='final-name'>" + escapeHtml(p.name) +
+          "</span><span class='final-score'>" + p.score + "</span></div>";
+      }).join("");
+      overlayBody.innerHTML =
+        "<h2>Final scores</h2><div class='final-list'>" + list + "</div>" +
+        (isHost
+          ? "<button id='play-again' class='btn btn-primary'>Play again</button>" +
+            "<button id='to-lobby' class='btn btn-ghost'>Back to lobby</button>"
+          : "<p class='overlay-sub'>Waiting for the host…</p>");
+      overlay.classList.add("show");
+      const pa = document.getElementById("play-again");
+      const tl = document.getElementById("to-lobby");
+      if (pa) pa.addEventListener("click", function () { hideOverlay(); socket.emit("start_game", {}); });
+      if (tl) tl.addEventListener("click", function () { hideOverlay(); socket.emit("back_to_lobby", {}); });
     });
 
     socket.on("room_error", function (e) {
@@ -259,7 +379,6 @@
       } else if (e.fatal) {
         fatalError(e.message);
       } else {
-        // Non-fatal (e.g. "only the host can…") — brief inline flash.
         settingsNote.textContent = e.message;
         if (chatCtl && boardView.style.display !== "none") chatCtl.note(e.message);
       }
@@ -268,20 +387,13 @@
     // host controls
     roundsSel.addEventListener("change", pushSettings);
     durationSel.addEventListener("change", pushSettings);
-    startBtn.addEventListener("click", function () {
-      socket.emit("start_game", {});
-    });
-    backBtn.addEventListener("click", function () {
-      socket.emit("back_to_lobby", {});
-    });
-    setWordBtn.addEventListener("click", function () {
-      const w = wordInput.value.trim();
-      if (!w) { wordInput.focus(); return; }
-      socket.emit("set_word", { word: w });
-      wordInput.value = "";
-    });
-    wordInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") setWordBtn.click();
+    startBtn.addEventListener("click", function () { socket.emit("start_game", {}); });
+    backBtn.addEventListener("click", function () { socket.emit("back_to_lobby", {}); });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 

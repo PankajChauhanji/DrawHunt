@@ -1,1 +1,5 @@
 env_draw/
+*.pyc
+__pycache__/
+instance/
+.webassets-cache/

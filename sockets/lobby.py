@@ -79,12 +79,23 @@ def register(socketio):
         # Replay word state too, so a reconnecting drawer recovers their word
         # and guessers get the masked pattern. The real word goes ONLY to the drawer.
         if room.state == "DRAWING" and room.current_word:
+            import time as _t
+            remaining = max(
+                1,
+                int(room.settings.get("duration", 0) - (_t.time() - room.turn_started_at)),
+            )
             if room.drawer_id == user_id:
                 emit("your_word", {"word": room.current_word})
             else:
                 emit("word_hint", {"mask": room.masked_word(),
                                    "length": len(room.current_word),
                                    "drawer_id": room.drawer_id})
+            emit("turn_start", {"round": room.current_round,
+                                "total_rounds": room.total_rounds,
+                                "drawer_id": room.drawer_id,
+                                "drawer_name": room.players[room.drawer_id].name
+                                if room.drawer_id in room.players else "",
+                                "duration": remaining})
 
     @socketio.on("update_settings")
     def on_update_settings(data):
@@ -122,17 +133,22 @@ def register(socketio):
             return emit("room_error", {"message": "Room no longer exists.", "fatal": True})
         if not room.is_host(user_id):
             return emit("room_error", {"message": "Only the host can start the game."})
+        if room.state not in ("LOBBY", "GAME_END"):
+            return  # already in progress
         if room.connected_count() < Config.MIN_PLAYERS:
             return emit("room_error",
                         {"message": f"Need at least {Config.MIN_PLAYERS} players to start."})
+        if room.game_running:
+            return
 
-        # Phase 2: go straight to the shared drawing board with a clean canvas.
-        # Phase 4 will insert a CHOOSING state (drawer picks a word) before this.
+        # Hand off to the director, which runs the full CHOOSING/DRAWING/ROUND_END
+        # loop as a background task. Imported here to avoid a circular import.
+        from sockets import director
+        room.game_running = True
         room.clear_strokes()
         room.clear_word()
-        room.state = "DRAWING"
-        log.info("game starting (DRAWING) in room %s", code)
-        broadcast_room(socketio, room)
+        log.info("launching game director for room %s", code)
+        socketio.start_background_task(director.run_game, socketio, code)
 
     @socketio.on("back_to_lobby")
     def on_back_to_lobby(data):
@@ -147,6 +163,7 @@ def register(socketio):
             return emit("room_error", {"message": "Only the host can do that."})
         room.clear_strokes()
         room.clear_word()
+        room.game_running = False      # signal the director to stop
         room.state = "LOBBY"
         log.info("room %s returned to lobby by host", code)
         broadcast_room(socketio, room)

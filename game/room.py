@@ -41,6 +41,16 @@ class Room:
         self.drawer_id: str | None = None
         self.guessed_order: list[str] = []   # user_ids in the order they guessed (for Phase 5 scoring)
 
+        # ---- game loop (Phase 4) ----
+        self.total_rounds = 0
+        self.current_round = 0
+        self.drawer_order: list[str] = []     # user_ids drawing this round, in order
+        self.turn_index = 0
+        self.word_choices: list[str] = []
+        self.used_words: set[str] = set()
+        self.turn_started_at = 0.0
+        self.game_running = False             # is the director task active?
+
     # ---------- roster ----------
     def add_player(self, user_id: str, name: str, sid: str) -> Player:
         """Add a new player or re-attach an existing one (reconnect)."""
@@ -176,14 +186,61 @@ class Room:
         guessers = self.active_guessers()
         return len(guessers) > 0 and all(p.has_guessed for p in guessers)
 
+    # ---------- game loop (Phase 4) ----------
+    def _connected_order(self) -> list[str]:
+        return [uid for uid, p in self.players.items() if p.connected]
+
+    def setup_game(self) -> None:
+        """Initialise a fresh game: rounds, drawer order, scores reset."""
+        import random
+        self.total_rounds = int(self.settings.get("rounds", Config.DEFAULT_ROUNDS))
+        self.current_round = 1
+        self.turn_index = 0
+        self.drawer_order = self._connected_order()
+        random.shuffle(self.drawer_order)
+        self.used_words = set()
+        for p in self.players.values():
+            p.score = 0
+            p.has_guessed = False
+            p.is_drawer = False
+
+    def current_drawer_id(self) -> str | None:
+        """The drawer for the current turn, skipping anyone who has left."""
+        while self.turn_index < len(self.drawer_order):
+            uid = self.drawer_order[self.turn_index]
+            p = self.players.get(uid)
+            if p is not None and p.connected:
+                return uid
+            self.turn_index += 1          # skip a player who left mid-round
+        return None
+
+    def advance(self) -> str:
+        """Move to the next turn. Returns 'next', 'new_round', or 'game_over'."""
+        import random
+        self.turn_index += 1
+        if self.current_drawer_id() is not None:
+            return "next"
+        # finished everyone in this round
+        if self.current_round >= self.total_rounds:
+            return "game_over"
+        self.current_round += 1
+        self.turn_index = 0
+        self.drawer_order = self._connected_order()
+        random.shuffle(self.drawer_order)
+        return "new_round" if self.current_drawer_id() is not None else "game_over"
+
     # ---------- serialization ----------
     def public_state(self) -> dict:
         """Full room snapshot broadcast to clients. The single source of truth
-        the UI renders from, so there is no client/server state to drift."""
+        the UI renders from, so there is no client/server state to drift. The
+        secret word is deliberately NOT included."""
         return {
             "code": self.code,
             "host_id": self.host_id,
             "state": self.state,
             "settings": self.settings,
             "players": [p.public() for p in self.players.values()],
+            "round": self.current_round,
+            "total_rounds": self.total_rounds,
+            "drawer_id": self.drawer_id,
         }

@@ -76,13 +76,17 @@ def _sanitize_segment(data) -> dict | None:
 
 
 def _active_room(sid):
-    """Resolve sid -> room if the sender is in a room that is currently drawing."""
+    """Resolve sid -> (room, user_id) only if the sender is the current drawer
+    in a room that is drawing. This is the gate that makes drawing turn-based:
+    a non-drawer's draw/clear/undo events are simply dropped."""
     lookup = room_manager.lookup_sid(sid)
     if not lookup:
         return None, None
     code, user_id = lookup
     room = room_manager.get_room(code)
     if room is None or room.state != "DRAWING":
+        return None, None
+    if room.drawer_id != user_id:
         return None, None
     return room, user_id
 
@@ -93,7 +97,6 @@ def register(socketio):
         room, user_id = _active_room(request.sid)
         if room is None:
             return
-        # Phase 4 will add here: if user_id != room.current_drawer: return
         seg = _sanitize_segment(data)
         if seg is None:
             return
