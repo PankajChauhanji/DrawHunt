@@ -16,6 +16,7 @@ import eventlet
 eventlet.monkey_patch()
 
 import logging
+import os
 
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
@@ -91,5 +92,9 @@ def healthz():
 
 
 if __name__ == "__main__":
-    log.info("starting Pictionary server on http://localhost:5000")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    # Local development entrypoint. In production, gunicorn imports `app` and
+    # this block does not run (see Procfile / README).
+    port = int(os.environ.get("PORT", "5000"))
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    log.info("starting Pictionary server on http://localhost:%d", port)
+    socketio.run(app, host="0.0.0.0", port=port, debug=debug)

@@ -1,0 +1,19 @@
+# Render Blueprint — deploy with: New > Blueprint, point at this repo.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: pictionary
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    # Single worker is mandatory: room state lives in memory in one process,
+    # and gunicorn's load balancer has no sticky sessions for multiple workers.
+    startCommand: "gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app"
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECRET_KEY
+        generateValue: true        # Render generates a strong random value
+      - key: CORS_ORIGINS
+        sync: false                # set to your service URL after first deploy, e.g. https://pictionary.onrender.com

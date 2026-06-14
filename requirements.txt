@@ -1,4 +1,7 @@
 Flask==3.0.3
 Flask-SocketIO==5.4.1
-eventlet==0.37.0
+# eventlet >= 0.40.3 is required for websocket/HTTP CVE fixes.
+eventlet==0.41.0
+# Pinned < 26: gunicorn 26.0.0 removed the bundled eventlet/gevent workers.
+# 23.0.0 ships the eventlet worker our single-process Socket.IO setup uses.
 gunicorn==23.0.0

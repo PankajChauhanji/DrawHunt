@@ -40,6 +40,7 @@
   let lastState = null;         // most recent room snapshot
   let amDrawer = false;         // do I hold the word this turn?
   let timerHandle = null;       // countdown interval
+  let chooseTimerHandle = null; // word-choice countdown interval
 
   codeEl.textContent = cfg.code;
 
@@ -249,7 +250,10 @@
     if (timerEl) { timerEl.textContent = ""; timerEl.classList.remove("low"); }
   }
 
-  function hideOverlay() { overlay.classList.remove("show"); }
+  function hideOverlay() {
+    overlay.classList.remove("show");
+    if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
+  }
 
   // Enable/disable drawing for this client and show the toolbar only to the drawer.
   function setDrawer(isDrawer) {
@@ -296,24 +300,41 @@
 
     // ---- game loop (Phase 4) ----
     socket.on("your_turn", function (d) {
-      // I'm the drawer — pick a word.
+      // I'm the drawer — pick a word before the timer runs out.
       stopTimer();
+      if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
       if (wordBar) { wordBar.textContent = "Your turn — pick a word!"; wordBar.classList.remove("is-drawer"); }
       const btns = d.choices.map(function (w) {
         return '<button class="btn btn-primary choice" data-word="' +
           w.replace(/"/g, "&quot;") + '">' + escapeHtml(w) + "</button>";
       }).join("");
+      const secs = d.duration || 10;
       overlayBody.innerHTML =
         '<h2>Choose a word to draw</h2>' +
         '<p class="overlay-sub">Round ' + d.round + " of " + d.total_rounds + "</p>" +
-        '<div class="choice-row">' + btns + "</div>";
+        '<div class="choice-row">' + btns + "</div>" +
+        '<p class="choose-timer" id="choose-timer">Auto-picks in ' + secs + "s</p>";
       overlay.classList.add("show");
       overlayBody.querySelectorAll(".choice").forEach(function (b) {
         b.addEventListener("click", function () {
+          if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
           socket.emit("choose_word", { word: b.dataset.word });
           hideOverlay();
         });
       });
+      // local countdown (the server is what actually auto-picks at 0)
+      let left = secs;
+      const ct = document.getElementById("choose-timer");
+      chooseTimerHandle = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(chooseTimerHandle); chooseTimerHandle = null;
+          if (ct) ct.textContent = "Picking one for you…";
+          overlayBody.querySelectorAll(".choice").forEach(function (b) { b.disabled = true; });
+          return;
+        }
+        if (ct) ct.textContent = "Auto-picks in " + left + "s";
+      }, 1000);
     });
 
     socket.on("choosing", function (d) {

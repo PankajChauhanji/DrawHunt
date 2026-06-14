@@ -25,6 +25,39 @@ log = logging.getLogger("pictionary.director")
 TICK = 0.25
 
 
+def _build_hint_schedule(word, duration):
+    """Decide which letters to reveal and when. Returns [(reveal_time, index)]
+    sorted by time. Max revealed ~= HINT_FRACTION of the letters (capped), and
+    at least one letter always stays hidden. Reveals are spread evenly across
+    the turn: duration/(hints+1), so they trickle out rather than dump at once."""
+    positions = [i for i, ch in enumerate(word) if ch != " "]
+    n = len(positions)
+    if n <= 1 or duration <= 0:
+        return []
+    max_hints = round(Config.HINT_FRACTION * n)
+    max_hints = min(max_hints, Config.HINT_MAX, n - 1)   # never reveal the whole word
+    if max_hints <= 0:
+        return []
+    import random as _r
+    chosen = _r.sample(positions, max_hints)
+    interval = duration / (max_hints + 1)
+    return sorted((interval * (k + 1), chosen[k]) for k in range(max_hints))
+
+
+def _emit_hint(socketio, room, drawer_id):
+    """Push the updated mask to guessers only (the drawer already knows it)."""
+    mask = room.masked_word()
+    for p in room.players.values():
+        if p.connected and p.user_id != drawer_id:
+            socketio.emit("word_hint",
+                          {"mask": mask, "length": len(room.current_word),
+                           "drawer_id": drawer_id},
+                          to=p.sid)
+    socketio.emit("chat",
+                  {"system": True, "kind": "hint", "message": "💡 A letter was revealed"},
+                  to=room.code)
+
+
 def _alive(room):
     """The game should keep running only while the room exists, has someone
     connected, and hasn't been aborted (host returned to lobby clears the flag)."""
@@ -94,7 +127,8 @@ def _run_choosing(socketio, code, drawer_id) -> bool:
 
     socketio.emit("your_turn",
                   {"choices": room.word_choices,
-                   "round": room.current_round, "total_rounds": room.total_rounds},
+                   "round": room.current_round, "total_rounds": room.total_rounds,
+                   "duration": Config.CHOOSE_DURATION},
                   to=drawer.sid)
     socketio.emit("choosing",
                   {"drawer_id": drawer_id, "drawer_name": drawer.name,
@@ -145,6 +179,7 @@ def _run_drawing(socketio, code, drawer_id):
                   to=code)
     broadcast_room(socketio, room)
 
+    hint_schedule = _build_hint_schedule(room.current_word, duration)
     elapsed = 0.0
     drawer_gone_for = 0.0
     while True:
@@ -153,6 +188,11 @@ def _run_drawing(socketio, code, drawer_id):
         room = room_manager.get_room(code)
         if not _alive(room):
             return
+        # reveal any hints whose time has come
+        while hint_schedule and elapsed >= hint_schedule[0][0]:
+            _t, idx = hint_schedule.pop(0)
+            room.revealed_indices.add(idx)
+            _emit_hint(socketio, room, drawer_id)
         if room.all_guessed():
             return
         if elapsed >= duration:

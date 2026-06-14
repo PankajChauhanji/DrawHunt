@@ -39,9 +39,13 @@ class Config:
     ROUND_DURATION = 80                   # seconds a drawer gets per turn
     WORD_CHOICES = 3                      # options offered to the drawer
 
-    CHOOSE_DURATION = 15                  # seconds the drawer has to pick a word
+    CHOOSE_DURATION = 10                  # seconds the drawer has to pick a word (auto-picks after)
     ROUND_END_PAUSE = 6                   # seconds the word-reveal screen shows
     DRAWER_DISCONNECT_GRACE = 4           # seconds a drawer can drop before the turn ends
+
+    # ---- Hints: progressively reveal letters to guessers as time passes ----
+    HINT_FRACTION = 0.3                   # max letters revealed ~= 30% of the word
+    HINT_MAX = 5                          # absolute cap on hints per turn
 
     # Scoring (Phase 5: time-based — faster correct guesses score more).
     GUESS_CEIL = 100                      # points for an instant guess (full time left)

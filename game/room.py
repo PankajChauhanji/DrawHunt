@@ -41,6 +41,7 @@ class Room:
         self.drawer_id: str | None = None
         self.guessed_order: list[str] = []   # user_ids in the order they guessed
         self.guess_times: dict[str, float] = {}   # user_id -> seconds into the turn when they guessed
+        self.revealed_indices: set[int] = set()    # character positions revealed as hints
 
         # ---- game loop (Phase 4) ----
         self.total_rounds = 0
@@ -152,6 +153,7 @@ class Room:
         self.drawer_id = drawer_id
         self.guessed_order = []
         self.guess_times = {}
+        self.revealed_indices = set()
         for p in self.players.values():
             p.has_guessed = False
             p.is_drawer = (p.user_id == drawer_id)
@@ -161,6 +163,7 @@ class Room:
         self.drawer_id = None
         self.guessed_order = []
         self.guess_times = {}
+        self.revealed_indices = set()
         for p in self.players.values():
             p.has_guessed = False
             p.is_drawer = False
@@ -178,10 +181,19 @@ class Room:
         return True
 
     def masked_word(self) -> str:
-        """Underscore pattern for guessers, preserving word boundaries."""
+        """Underscore pattern for guessers, with any hinted letters revealed and
+        word boundaries preserved (a wider gap separates words)."""
         if not self.current_word:
             return ""
-        return "   ".join("_ " * len(part) for part in self.current_word.split()).strip()
+        slots = []
+        for i, ch in enumerate(self.current_word):
+            if ch == " ":
+                slots.append("  ")                      # gap between words
+            elif i in self.revealed_indices:
+                slots.append(ch)
+            else:
+                slots.append("_")
+        return " ".join(slots)
 
     def active_guessers(self) -> list:
         """Connected players who are expected to guess (everyone but the drawer)."""

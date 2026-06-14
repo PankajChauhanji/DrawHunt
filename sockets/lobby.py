@@ -97,6 +97,27 @@ def register(socketio):
                                 if room.drawer_id in room.players else "",
                                 "duration": remaining})
 
+        # Reconnecting mid-CHOOSING: the drawer recovers their word choices,
+        # everyone else recovers the "X is choosing" indicator.
+        elif room.state == "CHOOSING" and room.drawer_id:
+            if room.drawer_id == user_id and room.word_choices:
+                emit("your_turn", {"choices": room.word_choices,
+                                   "round": room.current_round,
+                                   "total_rounds": room.total_rounds})
+            else:
+                drawer = room.players.get(room.drawer_id)
+                emit("choosing", {"drawer_id": room.drawer_id,
+                                  "drawer_name": drawer.name if drawer else "",
+                                  "round": room.current_round,
+                                  "total_rounds": room.total_rounds})
+
+        # Reconnecting after the game ended: re-send the final standings so the
+        # leaderboard shows (the one-time game_end event fired before they joined).
+        elif room.state == "GAME_END":
+            standings = sorted((p.public() for p in room.players.values()),
+                               key=lambda x: -x["score"])
+            emit("game_end", {"scores": standings})
+
     @socketio.on("update_settings")
     def on_update_settings(data):
         lookup = room_manager.lookup_sid(request.sid)
