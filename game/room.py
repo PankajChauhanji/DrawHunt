@@ -20,6 +20,7 @@ class Room:
         self.settings = settings or {
             "rounds": Config.DEFAULT_ROUNDS,
             "duration": Config.ROUND_DURATION,
+            "word_mode": Config.DEFAULT_WORD_MODE,
         }
         self.created_at = time.time()
         # A freshly created room with nobody in it yet is "empty" from birth,

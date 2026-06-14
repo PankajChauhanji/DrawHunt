@@ -135,10 +135,13 @@ def register(socketio):
         # Validate against allowed values; ignore anything out of range.
         rounds = data.get("rounds")
         duration = data.get("duration")
+        word_mode = data.get("word_mode")
         if rounds in Config.ALLOWED_ROUNDS:
             room.settings["rounds"] = rounds
         if duration in Config.ALLOWED_DURATIONS:
             room.settings["duration"] = duration
+        if word_mode in Config.ALLOWED_WORD_MODES:
+            room.settings["word_mode"] = word_mode
 
         log.info("settings updated in %s by host: %s", code, room.settings)
         broadcast_room(socketio, room)

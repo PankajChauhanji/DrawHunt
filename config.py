@@ -55,3 +55,10 @@ class Config:
     # Settings the host may change, with the allowed values (server-enforced).
     ALLOWED_ROUNDS = [1, 2, 3, 4, 5, 6, 7, 8]
     ALLOWED_DURATIONS = [40, 60, 80, 120]
+    # Word source: "auto" = offer 3 random words; "own" = drawer types their own.
+    ALLOWED_WORD_MODES = ["auto", "own"]
+    DEFAULT_WORD_MODE = "auto"
+
+    # "You're close!" nudge: max edit distance that still counts as close.
+    CLOSE_DISTANCE_SHORT = 1   # for words up to 4 letters
+    CLOSE_DISTANCE_LONG = 2    # for longer words

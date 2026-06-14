@@ -42,6 +42,33 @@ def _normalize(text: str) -> str:
     return " ".join(text.lower().split())
 
 
+def _levenshtein(a: str, b: str) -> int:
+    """Edit distance between two strings (pure Python, no dependency)."""
+    if a == b:
+        return 0
+    if not a:
+        return len(b)
+    if not b:
+        return len(a)
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cost = 0 if ca == cb else 1
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost))
+        prev = cur
+    return prev[-1]
+
+
+def _is_close(guess: str, target: str) -> bool:
+    """A near-miss: close enough to nudge, but not exact (exact is handled
+    separately as a correct guess)."""
+    threshold = (Config.CLOSE_DISTANCE_SHORT if len(target) <= 4
+                 else Config.CLOSE_DISTANCE_LONG)
+    dist = _levenshtein(guess, target)
+    return 0 < dist <= threshold
+
+
 def _contains_word(normalized_msg: str, normalized_word: str) -> bool:
     # whole-word containment, so "cat" doesn't trip on "category"
     return re.search(r"\b" + re.escape(normalized_word) + r"\b", normalized_msg) is not None
@@ -120,15 +147,22 @@ def register(socketio):
                               _in_know_sids(room))
                 return
 
-        # 4. normal chat to the whole room
+            # 4. near-miss: nudge ONLY this guesser, privately (no word leak).
+            #    The message itself still posts publicly as a normal guess below.
+            if _is_close(normalized, target):
+                emit("chat", {"system": True, "kind": "close",
+                              "message": "😯 So close!"})
+
+        # 5. normal chat to the whole room
         socketio.emit("chat",
                       {"user_id": user_id, "name": player.name, "message": message},
                       to=code)
 
     @socketio.on("choose_word")
     def on_choose_word(data):
-        """The drawer picks one of the offered words. The director is waiting in
-        the CHOOSING phase and proceeds once the word is set."""
+        """The drawer commits a word. In "auto" mode it must be one of the three
+        offered; in "own" mode it's whatever the drawer typed. The director is
+        waiting in CHOOSING and proceeds once the word is set."""
         lookup = room_manager.lookup_sid(request.sid)
         if not lookup:
             return
@@ -139,7 +173,12 @@ def register(socketio):
         if user_id != room.current_drawer_id():
             return  # only the current drawer may choose
         word = (data.get("word") or "").strip()
-        if word not in room.word_choices:
-            return  # must be one of the offered choices
+        if not word:
+            return
+        mode = room.settings.get("word_mode", Config.DEFAULT_WORD_MODE)
+        if mode == "own":
+            word = word[:WORD_MAX_LEN]          # drawer's own word, any value
+        elif word not in room.word_choices:
+            return                               # auto mode: must be one offered
         room.set_word(word, user_id)
-        log.info("drawer chose a word in room %s", code)
+        log.info("drawer set a word in room %s (mode=%s)", code, mode)

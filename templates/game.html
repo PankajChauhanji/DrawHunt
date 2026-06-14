@@ -44,6 +44,13 @@
           {% for d in allowed_durations %}<option value="{{ d }}">{{ d }}s</option>{% endfor %}
         </select>
       </div>
+      <div class="setting">
+        <label for="wordmode-select">Words</label>
+        <select id="wordmode-select" class="field">
+          <option value="auto">Automatic — pick from 3</option>
+          <option value="own">Drawer types their own</option>
+        </select>
+      </div>
       <p id="settings-note" class="settings-note"></p>
 
       <button id="start-btn" class="btn btn-primary" style="display:none">Start drawing</button>

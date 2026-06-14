@@ -115,18 +115,20 @@ def run_game(socketio, code):
 
 def _run_choosing(socketio, code, drawer_id) -> bool:
     """Offer word choices to the drawer. Returns True once a word is set
-    (chosen or auto-picked), False if the drawer left before choosing."""
+    (chosen, typed, or auto-picked), False if the drawer left before choosing."""
     room = room_manager.get_room(code)
     room.state = "CHOOSING"
     room.current_word = None
     room.drawer_id = drawer_id
-    room.word_choices = words.pick_choices(Config.WORD_CHOICES, room.used_words)
+    mode = room.settings.get("word_mode", Config.DEFAULT_WORD_MODE)
+    # In "own" mode the drawer types a word, so there are no preset choices.
+    room.word_choices = [] if mode == "own" else words.pick_choices(Config.WORD_CHOICES, room.used_words)
     drawer = room.players[drawer_id]
     for p in room.players.values():
         p.is_drawer = (p.user_id == drawer_id)
 
     socketio.emit("your_turn",
-                  {"choices": room.word_choices,
+                  {"choices": room.word_choices, "mode": mode,
                    "round": room.current_round, "total_rounds": room.total_rounds,
                    "duration": Config.CHOOSE_DURATION},
                   to=drawer.sid)
@@ -143,13 +145,15 @@ def _run_choosing(socketio, code, drawer_id) -> bool:
         room = room_manager.get_room(code)
         if not _alive(room):
             return False
-        if room.current_word is not None:        # drawer chose (set by handler)
+        if room.current_word is not None:        # drawer chose / typed (set by handler)
             return True
         d = room.players.get(drawer_id)
         if d is None or not d.connected:         # drawer left while choosing
             return False
         if waited >= Config.CHOOSE_DURATION:     # auto-pick on timeout
-            room.set_word(random.choice(room.word_choices), drawer_id)
+            # In "own" mode there's no list, so fall back to a random bank word.
+            fallback = (room.word_choices or words.pick_choices(1, room.used_words))
+            room.set_word(random.choice(fallback) if fallback else words.pick_choices(1)[0], drawer_id)
             return True
 
 

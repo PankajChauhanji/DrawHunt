@@ -19,6 +19,7 @@
   const playerCountEl = document.getElementById("player-count");
   const roundsSel = document.getElementById("rounds-select");
   const durationSel = document.getElementById("duration-select");
+  const wordModeSel = document.getElementById("wordmode-select");
   const settingsNote = document.getElementById("settings-note");
   const startBtn = document.getElementById("start-btn");
   const waitNote = document.getElementById("wait-note");
@@ -146,8 +147,10 @@
     // settings
     roundsSel.value = String(state.settings.rounds);
     durationSel.value = String(state.settings.duration);
+    if (wordModeSel) wordModeSel.value = state.settings.word_mode || "auto";
     roundsSel.disabled = !isHost;
     durationSel.disabled = !isHost;
+    if (wordModeSel) wordModeSel.disabled = !isHost;
     settingsNote.textContent = isHost
       ? "You're the host — set the rules."
       : "Only the host can change these.";
@@ -300,28 +303,58 @@
 
     // ---- game loop (Phase 4) ----
     socket.on("your_turn", function (d) {
-      // I'm the drawer — pick a word before the timer runs out.
+      // I'm the drawer — pick (auto) or type (own) a word before the timer ends.
       stopTimer();
       if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
       if (wordBar) { wordBar.textContent = "Your turn — pick a word!"; wordBar.classList.remove("is-drawer"); }
-      const btns = d.choices.map(function (w) {
-        return '<button class="btn btn-primary choice" data-word="' +
-          w.replace(/"/g, "&quot;") + '">' + escapeHtml(w) + "</button>";
-      }).join("");
       const secs = d.duration || 10;
-      overlayBody.innerHTML =
-        '<h2>Choose a word to draw</h2>' +
-        '<p class="overlay-sub">Round ' + d.round + " of " + d.total_rounds + "</p>" +
-        '<div class="choice-row">' + btns + "</div>" +
-        '<p class="choose-timer" id="choose-timer">Auto-picks in ' + secs + "s</p>";
+
+      let body;
+      if (d.mode === "own") {
+        body =
+          '<h2>Type a word to draw</h2>' +
+          '<p class="overlay-sub">Round ' + d.round + " of " + d.total_rounds +
+          " — others will guess this</p>" +
+          '<input id="own-word" class="field" maxlength="40" placeholder="your secret word" autocomplete="off" autofocus />' +
+          '<button id="own-go" class="btn btn-primary">Start drawing</button>' +
+          '<p class="choose-timer" id="choose-timer">Auto-picks in ' + secs + "s</p>";
+      } else {
+        const btns = d.choices.map(function (w) {
+          return '<button class="btn btn-primary choice" data-word="' +
+            w.replace(/"/g, "&quot;") + '">' + escapeHtml(w) + "</button>";
+        }).join("");
+        body =
+          '<h2>Choose a word to draw</h2>' +
+          '<p class="overlay-sub">Round ' + d.round + " of " + d.total_rounds + "</p>" +
+          '<div class="choice-row">' + btns + "</div>" +
+          '<p class="choose-timer" id="choose-timer">Auto-picks in ' + secs + "s</p>";
+      }
+      overlayBody.innerHTML = body;
       overlay.classList.add("show");
-      overlayBody.querySelectorAll(".choice").forEach(function (b) {
-        b.addEventListener("click", function () {
+
+      if (d.mode === "own") {
+        const input = document.getElementById("own-word");
+        const go = document.getElementById("own-go");
+        function submitOwn() {
+          const w = input.value.trim();
+          if (!w) { input.focus(); return; }
           if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
-          socket.emit("choose_word", { word: b.dataset.word });
+          socket.emit("choose_word", { word: w });
           hideOverlay();
+        }
+        go.addEventListener("click", submitOwn);
+        input.addEventListener("keydown", function (e) { if (e.key === "Enter") submitOwn(); });
+        if (input.focus) input.focus();
+      } else {
+        overlayBody.querySelectorAll(".choice").forEach(function (b) {
+          b.addEventListener("click", function () {
+            if (chooseTimerHandle) { clearInterval(chooseTimerHandle); chooseTimerHandle = null; }
+            socket.emit("choose_word", { word: b.dataset.word });
+            hideOverlay();
+          });
         });
-      });
+      }
+
       // local countdown (the server is what actually auto-picks at 0)
       let left = secs;
       const ct = document.getElementById("choose-timer");
@@ -330,7 +363,7 @@
         if (left <= 0) {
           clearInterval(chooseTimerHandle); chooseTimerHandle = null;
           if (ct) ct.textContent = "Picking one for you…";
-          overlayBody.querySelectorAll(".choice").forEach(function (b) { b.disabled = true; });
+          overlayBody.querySelectorAll(".choice, #own-go, #own-word").forEach(function (b) { b.disabled = true; });
           return;
         }
         if (ct) ct.textContent = "Auto-picks in " + left + "s";
@@ -395,8 +428,11 @@
 
       const list = rest.length
         ? '<div class="final-list">' + rest.map(function (p, i) {
+            var isLast = (i === rest.length - 1);
+            var emoji = isLast ? "😭" : "😔";
             return '<div class="final-row' + (p.user_id === myUid ? " me" : "") + '">' +
               '<span class="rank">' + (i + 4) + ".</span>" +
+              '<span class="final-emoji">' + emoji + "</span>" +
               '<span class="final-name">' + escapeHtml(p.name) + "</span>" +
               '<span class="final-score">' + p.score + "</span></div>";
           }).join("") + "</div>"
@@ -431,6 +467,7 @@
     // host controls
     roundsSel.addEventListener("change", pushSettings);
     durationSel.addEventListener("change", pushSettings);
+    if (wordModeSel) wordModeSel.addEventListener("change", pushSettings);
     startBtn.addEventListener("click", function () { socket.emit("start_game", {}); });
     backBtn.addEventListener("click", function () { socket.emit("back_to_lobby", {}); });
   }
@@ -445,6 +482,7 @@
     socket.emit("update_settings", {
       rounds: parseInt(roundsSel.value, 10),
       duration: parseInt(durationSel.value, 10),
+      word_mode: wordModeSel ? wordModeSel.value : "auto",
     });
   }
 

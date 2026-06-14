@@ -115,6 +115,7 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 /* word choices */
 .choice-row { display: flex; flex-direction: column; gap: 0.5rem; }
 .choice-row .choice { width: 100%; text-transform: capitalize; }
+.choose-timer { font-family: "Caveat", cursive; font-size: 1.1rem; color: var(--amber); margin-top: 0.2rem; }
 
 /* turn-end reveal */
 .reveal-word { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 2rem; color: var(--green); text-transform: capitalize; margin: 0.2rem 0; }
@@ -134,13 +135,18 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 .podium { display: flex; justify-content: center; align-items: flex-end; gap: 0.5rem; margin: 0.6rem 0 0.8rem; min-height: 150px; }
 .pod { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.15rem; width: 84px; }
 .pod-medal { font-size: 1.5rem; }
+.pod.high .pod-medal { animation: medal-bounce 0.9s ease 0.5s 2; }
 .pod-name { font-size: 0.82rem; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pod-score { font-family: "Fredoka", sans-serif; color: var(--amber); font-size: 0.9rem; }
-.pod-base { width: 100%; border-radius: 8px 8px 0 0; background: var(--ink-soft); border: 1px solid var(--line); border-bottom: none; }
-.pod.high .pod-base { height: 86px; background: linear-gradient(180deg, rgba(245,177,76,0.35), var(--ink-soft)); }
-.pod.mid .pod-base { height: 58px; }
-.pod.low .pod-base { height: 38px; }
+.pod-base { width: 100%; border-radius: 8px 8px 0 0; background: var(--ink-soft); border: 1px solid var(--line); border-bottom: none; transform-origin: bottom; animation: pod-rise 0.6s ease both; }
+.pod.high .pod-base { height: 86px; background: linear-gradient(180deg, rgba(245,177,76,0.35), var(--ink-soft)); animation-delay: 0.25s; }
+.pod.mid .pod-base { height: 58px; animation-delay: 0.1s; }
+.pod.low .pod-base { height: 38px; animation-delay: 0s; }
 .pod.me .pod-name { color: var(--green); font-weight: 600; }
+@keyframes pod-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes medal-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+.final-emoji { width: 1.4rem; text-align: center; }
 
 @media (max-width: 620px) { .lobby { grid-template-columns: 1fr; } }
 
@@ -157,7 +163,6 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
   color: var(--paper); padding: 0.3rem 0.2rem; min-height: 1.6rem;
 }
 .word-bar.is-drawer { color: var(--amber); letter-spacing: normal; }
-.chat-line.system.hint { color: var(--amber); }
 .head-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .host-word-tools { display: flex; gap: 0.4rem; }
 .field.tiny { width: 180px; padding: 0.45rem 0.7rem; font-size: 0.9rem; }
@@ -214,6 +219,8 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 .chat-line.team .chat-name::after { content: " (team)"; color: var(--muted); font-weight: 400; font-size: 0.75rem; }
 .chat-line.system { font-family: "Caveat", cursive; font-size: 1.02rem; color: var(--muted); text-align: center; }
 .chat-line.system.guess { color: var(--green); }
+.chat-line.system.close { color: var(--amber); font-size: 1.1rem; }
+.chat-line.system.hint { color: var(--amber); }
 .chat-input-row { display: flex; gap: 0.4rem; padding: 0.55rem; border-top: 1px solid var(--line); }
 .chat-input-row .field { padding: 0.5rem 0.7rem; }
 

@@ -1,6 +1,6 @@
-# Pictionary Game — Complete Build Roadmap
+# Draw_hunt Game — Complete Build Roadmap
 
-A real-time, multiplayer draw-and-guess game (skribbl.io style) built with **Flask-SocketIO**.
+A real-time, multiplayer draw-and-guess game built with **Flask-SocketIO**.
 One player draws a chosen word; others guess via chat; scores are awarded by guess order. Rooms hold up to 10 players and run for an admin-selected number of rounds.
 
 ---
@@ -43,7 +43,7 @@ Three event categories, by cost:
 ## 3. Project Structure
 
 ```
-pictionary/
+draw_hunt/
 ├── app.py                  # Flask app + SocketIO init + entrypoint
 ├── config.py               # constants: rounds, timers, points, max players
 ├── requirements.txt
