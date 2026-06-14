@@ -4,6 +4,9 @@ A multiplayer draw_hunt game built with **Flask** and **Flask-SocketIO**.
 One player draws a chosen word; everyone else races to guess it in chat. Rooms
 hold up to 10 players and run for a configurable number of rounds.
 
+![Home Page](images/starter.png)
+![Game Lobby](images/player_lobby.png)
+
 ## Features
 
 - Create or join a room with a short 4-letter code (up to 10 players)
