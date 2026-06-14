@@ -29,6 +29,10 @@ class Config:
     ROOM_EMPTY_GRACE = 60                 # s an empty room is kept before deletion
     SWEEP_INTERVAL = 10                   # s between background cleanup passes
 
+    # ---- Drawing relay (Phase 2) ----
+    MAX_POINTS_PER_SEGMENT = 256        # reject oversized segments (abuse guard)
+    MAX_HISTORY_POINTS = 300_000        # cap recorded points per room (memory guard)
+
     # ---- Game rules (used from Phase 4 onward) ----
     # NOTE: "a round" here means one full cycle in which every player draws once.
     DEFAULT_ROUNDS = 3

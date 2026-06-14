@@ -22,7 +22,7 @@ from flask_socketio import SocketIO
 
 from config import Config
 from game.manager import room_manager
-from sockets import connection, lobby
+from sockets import connection, lobby, drawing, gameplay
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,6 +50,8 @@ socketio = SocketIO(
 # Register socket handlers per concern.
 connection.register(socketio)
 lobby.register(socketio)
+drawing.register(socketio)
+gameplay.register(socketio)
 # Start the periodic room-cleanup sweeper.
 lobby.start_sweeper(socketio)
 

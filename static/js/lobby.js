@@ -25,6 +25,21 @@
   const overlay = document.getElementById("overlay");
   const overlayBody = document.getElementById("overlay-body");
 
+  // views + board elements
+  const lobbyView = document.getElementById("lobby-view");
+  const boardView = document.getElementById("board-view");
+  const backBtn = document.getElementById("back-to-lobby");
+  const sidePlayersEl = document.getElementById("side-players");
+  const wordBar = document.getElementById("word-bar");
+  const hostWordTools = document.getElementById("host-word-tools");
+  const wordInput = document.getElementById("word-input");
+  const setWordBtn = document.getElementById("set-word-btn");
+  let boardCtl = null;          // BoardView instance (lazy-initialised once)
+  let chatCtl = null;           // ChatView instance
+  let boardReady = false;
+  let lastState = null;         // most recent room snapshot
+  let amDrawer = false;         // do I hold the word this turn?
+
   codeEl.textContent = cfg.code;
 
   // Stable avatar colour per player, derived from their user_id.
@@ -37,6 +52,35 @@
   function initials(name) {
     const parts = name.trim().split(/\s+/);
     return ((parts[0] || "?")[0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+
+  // Scoreboard shown beside the canvas during play.
+  function renderSidePlayers(state) {
+    if (!sidePlayersEl) return;
+    sidePlayersEl.innerHTML = "";
+    state.players
+      .slice()
+      .sort(function (a, b) { return b.score - a.score; })
+      .forEach(function (p) {
+        const row = document.createElement("div");
+        row.className =
+          "sp" + (p.has_guessed ? " guessed" : "") + (p.connected ? "" : " offline");
+        const av = document.createElement("span");
+        av.className = "sp-av";
+        av.style.background = colorFor(p.user_id);
+        av.textContent = initials(p.name);
+        const nm = document.createElement("span");
+        nm.className = "sp-name";
+        nm.textContent = p.name + (p.user_id === myUid ? " (you)" : "");
+        const badge = document.createElement("span");
+        badge.className = "sp-badge";
+        badge.textContent = p.is_drawer ? "✏️" : (p.has_guessed ? "✓" : "");
+        const sc = document.createElement("span");
+        sc.className = "sp-score";
+        sc.textContent = p.score;
+        row.append(av, nm, badge, sc);
+        sidePlayersEl.appendChild(row);
+      });
   }
 
   function setConn(state) {
@@ -71,6 +115,7 @@
 
   // ---- rendering ----
   function render(state) {
+    lastState = state;
     const isHost = state.host_id === myUid;
     const players = state.players;
     const connected = players.filter(function (p) { return p.connected; });
@@ -112,7 +157,7 @@
       const enough = connected.length >= cfg.minPlayers;
       startBtn.disabled = !enough;
       startBtn.textContent = enough
-        ? "Start game"
+        ? "Start drawing"
         : "Need " + cfg.minPlayers + " players to start";
     } else {
       startBtn.style.display = "none";
@@ -120,14 +165,48 @@
       waitNote.textContent = "Waiting for the host to start…";
     }
 
-    // game starting (Phase 1 placeholder)
-    if (state.state === "STARTING") {
-      overlayBody.innerHTML =
-        '<h2>Game starting!</h2>' +
-        '<p class="overlay-sub">The draw-and-guess loop lands in Phase 4. ' +
-        "For now this confirms the host's start button works and is gated to the host.</p>";
-      overlay.classList.add("show");
+    // ---- view switch: lobby vs drawing board ----
+    if (state.state === "DRAWING") {
+      showBoard(isHost);
+      renderSidePlayers(state);
+      hostWordTools.style.display = isHost ? "" : "none";
+    } else {
+      showLobby();
+      // back in the lobby: reset per-turn UI
+      amDrawer = false;
+      if (wordBar) wordBar.textContent = "·····";
     }
+  }
+
+  function showBoard(isHost) {
+    lobbyView.style.display = "none";
+    boardView.style.display = "";
+    backBtn.style.display = isHost ? "" : "none";
+    if (!boardReady) {
+      boardCtl = window.BoardView.init({
+        canvas: document.getElementById("board-canvas"),
+        socket: socket,
+        swatches: document.getElementById("swatches"),
+        sizes: document.getElementById("sizes"),
+        eraser: document.getElementById("eraser-btn"),
+        undo: document.getElementById("undo-btn"),
+        clear: document.getElementById("clear-btn"),
+      });
+      chatCtl = window.ChatView.init({
+        socket: socket,
+        log: document.getElementById("chat-log"),
+        input: document.getElementById("chat-input"),
+        send: document.getElementById("chat-send"),
+      });
+      boardReady = true;
+    }
+    // size the canvas to its now-visible container, then it's ready to draw.
+    boardCtl.resize();
+  }
+
+  function showLobby() {
+    boardView.style.display = "none";
+    lobbyView.style.display = "";
   }
 
   function fatalError(msg) {
@@ -156,6 +235,22 @@
 
     socket.on("room_update", render);
 
+    // ---- word state (Phase 3) ----
+    socket.on("your_word", function (d) {
+      amDrawer = true;
+      if (wordBar) {
+        wordBar.textContent = "You're drawing: " + d.word;
+        wordBar.classList.add("is-drawer");
+      }
+    });
+    socket.on("word_hint", function (d) {
+      amDrawer = false;
+      if (wordBar) {
+        wordBar.textContent = d.mask || "·····";
+        wordBar.classList.remove("is-drawer");
+      }
+    });
+
     socket.on("room_error", function (e) {
       if (e.code === "NO_NAME") {
         ensureNameThen(function () {
@@ -166,6 +261,7 @@
       } else {
         // Non-fatal (e.g. "only the host can…") — brief inline flash.
         settingsNote.textContent = e.message;
+        if (chatCtl && boardView.style.display !== "none") chatCtl.note(e.message);
       }
     });
 
@@ -174,6 +270,18 @@
     durationSel.addEventListener("change", pushSettings);
     startBtn.addEventListener("click", function () {
       socket.emit("start_game", {});
+    });
+    backBtn.addEventListener("click", function () {
+      socket.emit("back_to_lobby", {});
+    });
+    setWordBtn.addEventListener("click", function () {
+      const w = wordInput.value.trim();
+      if (!w) { wordInput.focus(); return; }
+      socket.emit("set_word", { word: w });
+      wordInput.value = "";
+    });
+    wordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") setWordBtn.click();
     });
   }
 

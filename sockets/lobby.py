@@ -26,12 +26,9 @@ from flask_socketio import emit, join_room as sio_join, leave_room as sio_leave
 
 from config import Config
 from game.manager import room_manager
+from sockets.common import broadcast_room
 
 log = logging.getLogger("pictionary.lobby")
-
-
-def _broadcast_room(socketio, room):
-    socketio.emit("room_update", room.public_state(), to=room.code)
 
 
 def register(socketio):
@@ -52,10 +49,10 @@ def register(socketio):
 
         is_returning = user_id in room.players
 
-        if room.state != "LOBBY" and not is_returning:
-            return emit("room_error",
-                        {"message": "That game has already started.",
-                         "code": "STARTED", "fatal": True})
+        # Joining a game already in progress is allowed: the player picks up the
+        # live canvas (replayed below) and, once the round loop exists, will
+        # spectate until the next turn. (Earlier this was rejected; Phase 2's
+        # late-joiner replay and the planned mid-game spectator flow need it.)
 
         if not is_returning and room.is_full():
             return emit("room_error",
@@ -72,7 +69,22 @@ def register(socketio):
         room_manager.bind_sid(request.sid, code, user_id)
         log.info("join: %s (%s) -> room %s [%d players]",
                  name, user_id, code, room.player_count())
-        _broadcast_room(socketio, room)
+        broadcast_room(socketio, room)
+
+        # If they joined mid-draw, replay the current canvas to them alone so
+        # their board matches everyone else's.
+        if room.state == "DRAWING" and room.stroke_ops:
+            emit("canvas_state", {"ops": room.stroke_ops})
+
+        # Replay word state too, so a reconnecting drawer recovers their word
+        # and guessers get the masked pattern. The real word goes ONLY to the drawer.
+        if room.state == "DRAWING" and room.current_word:
+            if room.drawer_id == user_id:
+                emit("your_word", {"word": room.current_word})
+            else:
+                emit("word_hint", {"mask": room.masked_word(),
+                                   "length": len(room.current_word),
+                                   "drawer_id": room.drawer_id})
 
     @socketio.on("update_settings")
     def on_update_settings(data):
@@ -97,7 +109,7 @@ def register(socketio):
             room.settings["duration"] = duration
 
         log.info("settings updated in %s by host: %s", code, room.settings)
-        _broadcast_room(socketio, room)
+        broadcast_room(socketio, room)
 
     @socketio.on("start_game")
     def on_start_game(data):
@@ -114,11 +126,30 @@ def register(socketio):
             return emit("room_error",
                         {"message": f"Need at least {Config.MIN_PLAYERS} players to start."})
 
-        # Phase 1: transition state only. The actual round/draw/guess loop is
-        # built in Phase 4 — the client shows a placeholder for STARTING.
-        room.state = "STARTING"
-        log.info("game starting in room %s", code)
-        _broadcast_room(socketio, room)
+        # Phase 2: go straight to the shared drawing board with a clean canvas.
+        # Phase 4 will insert a CHOOSING state (drawer picks a word) before this.
+        room.clear_strokes()
+        room.clear_word()
+        room.state = "DRAWING"
+        log.info("game starting (DRAWING) in room %s", code)
+        broadcast_room(socketio, room)
+
+    @socketio.on("back_to_lobby")
+    def on_back_to_lobby(data):
+        lookup = room_manager.lookup_sid(request.sid)
+        if not lookup:
+            return emit("room_error", {"message": "You are not in a room."})
+        code, user_id = lookup
+        room = room_manager.get_room(code)
+        if room is None:
+            return emit("room_error", {"message": "Room no longer exists.", "fatal": True})
+        if not room.is_host(user_id):
+            return emit("room_error", {"message": "Only the host can do that."})
+        room.clear_strokes()
+        room.clear_word()
+        room.state = "LOBBY"
+        log.info("room %s returned to lobby by host", code)
+        broadcast_room(socketio, room)
 
     @socketio.on("leave_room")
     def on_leave_room(data):
@@ -136,7 +167,7 @@ def register(socketio):
             room.reassign_host()
         log.info("leave: %s left room %s", user_id, code)
         if room.has_connected():
-            _broadcast_room(socketio, room)
+            broadcast_room(socketio, room)
 
 
 def start_sweeper(socketio):

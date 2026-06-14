@@ -15,7 +15,7 @@
     <span class="conn" title="connection"><span id="conn-dot" class="conn-dot"></span></span>
   </header>
 
-  <main class="lobby">
+  <main class="lobby" id="lobby-view">
     <section class="code-stamp">
       <p class="code-label">room code</p>
       <p id="room-code" class="code-value">····</p>
@@ -46,9 +46,50 @@
       </div>
       <p id="settings-note" class="settings-note"></p>
 
-      <button id="start-btn" class="btn btn-primary" style="display:none">Start game</button>
+      <button id="start-btn" class="btn btn-primary" style="display:none">Start drawing</button>
       <p id="wait-note" class="wait-note" style="display:none">Waiting for the host to start…</p>
     </section>
+  </main>
+
+  <main class="board-wrap" id="board-view" style="display:none">
+    <div class="board-head">
+      <span id="word-bar" class="word-bar">·····</span>
+      <div class="head-actions">
+        <div id="host-word-tools" class="host-word-tools" style="display:none">
+          <input id="word-input" class="field tiny" maxlength="40" placeholder="secret word (test)" autocomplete="off" />
+          <button id="set-word-btn" class="btn btn-ghost small">Set word</button>
+        </div>
+        <button id="back-to-lobby" class="btn btn-ghost small" style="display:none">Back to lobby</button>
+      </div>
+    </div>
+
+    <div class="board-main">
+      <div class="board-left">
+        <div class="canvas-frame">
+          <canvas id="board-canvas"></canvas>
+        </div>
+        <div class="toolbar">
+          <div id="swatches" class="swatches"></div>
+          <div id="sizes" class="sizes"></div>
+          <div class="tool-actions">
+            <button id="eraser-btn" class="tool-btn" title="Eraser">Eraser</button>
+            <button id="undo-btn" class="tool-btn" title="Undo">Undo</button>
+            <button id="clear-btn" class="tool-btn danger" title="Clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="board-side">
+        <div id="side-players" class="side-players"></div>
+        <div class="chat">
+          <div id="chat-log" class="chat-log"></div>
+          <div class="chat-input-row">
+            <input id="chat-input" class="field" maxlength="200" placeholder="Type your guess…" autocomplete="off" />
+            <button id="chat-send" class="btn btn-primary small">Send</button>
+          </div>
+        </div>
+      </aside>
+    </div>
   </main>
 
   <div id="overlay" class="overlay">
@@ -64,6 +105,9 @@
   </script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='js/identity.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/board.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
   <script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
 </body>
 </html>
