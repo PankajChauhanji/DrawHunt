@@ -202,7 +202,6 @@ WORDS = {
 # Pre-flatten the list and remove duplicates. 
 # Using set() ensures words that appear in multiple categories are only loaded once.
 FLAT_WORDS_POOL = list(set(word for theme_list in WORDS.values() for word in theme_list))
-print(len(FLAT_WORDS_POOL), "unique words loaded into the pool.")
 
 def pick_choices(n: int, exclude: set[str] | None = None) -> list[str]:
     """

@@ -230,3 +230,17 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 }
 @media (max-width: 620px) { .lobby { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- footer ---------- */
+.site-footer { border-top: 1px solid var(--line); padding: 0.9rem 1rem; text-align: center; background: transparent; }
+.site-footer .footer-inner { max-width: 980px; margin: 0 auto; display: flex; gap: 0.6rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+.site-footer .footer-copy { color: var(--muted); font-size: 0.85rem; }
+.site-footer .footer-links { display: inline-flex; gap: 0.6rem; align-items: center; }
+.site-footer .footer-links a { color: var(--paper); text-decoration: none; font-size: 0.85rem; border-bottom: 1px dashed transparent; padding-bottom: 1px; }
+.site-footer .footer-links a:hover { color: var(--green); border-bottom-color: rgba(255,255,255,0.06); }
+
+/* call-to-action below footer */
+.footer-cta-wrap { text-align: center; margin-top: 0.35rem; }
+.footer-cta { color: var(--muted); font-size: 0.95rem; margin: 0.25rem 0 0 0; }
+.footer-cta a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
+.footer-cta a:hover { color: var(--green); }
