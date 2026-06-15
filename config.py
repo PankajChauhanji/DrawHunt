@@ -47,10 +47,19 @@ class Config:
     HINT_FRACTION = 0.3                   # max letters revealed ~= 30% of the word
     HINT_MAX = 5                          # absolute cap on hints per turn
 
-    # Scoring (Phase 5: time-based — faster correct guesses score more).
-    GUESS_CEIL = 100                      # points for an instant guess (full time left)
-    GUESS_FLOOR = 40                      # points for a last-second guess
-    DRAWER_MAX = 55                       # max drawer bonus (scaled by how many guessed)
+    # ---- Scoring ----
+    # Guessers: rank bonus + time bonus + difficulty bonus, floor 10.
+    RANK_BONUS_MAX = 100          # divided by player count, scaled by remaining rank
+    TIME_BONUS_MAX = 100          # 100 * (time_remaining / duration)
+    SCORE_FLOOR = 10              # minimum any player gets per turn (even non-guessers)
+
+    # Difficulty bonus by letter count (spaces excluded): ceil(letters/3) * 15
+    DIFFICULTY_STEP = 15          # points per difficulty tier
+    DIFFICULTY_TIER_SIZE = 3      # letters per tier
+
+    # Drawer: flat reward, capped, floor.
+    DRAWER_GUESSED = 50           # flat score if at least one person guessed
+    DRAWER_FLOOR = 10             # score if nobody guessed
 
     # Settings the host may change, with the allowed values (server-enforced).
     ALLOWED_ROUNDS = [1, 2, 3, 4, 5, 6, 7, 8]
