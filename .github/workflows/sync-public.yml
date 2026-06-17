@@ -122,8 +122,13 @@ jobs:
           echo "✅ Git identity set"
 
           echo ""
+          echo "⚙️  Overriding checkout credentials with our token..."
+          git config --global url."https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
+          echo "✅ Credentials overridden"
+
+          echo ""
           echo "⚙️  Adding public remote..."
-          git remote add public https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/PankajChauhanji/DrawHunt.git
+          git remote add public https://github.com/PankajChauhanji/DrawHunt.git
           echo "✅ Remote added"
 
           echo ""
@@ -138,7 +143,7 @@ jobs:
           echo ""
           echo "⚙️  Pushing to public repo (main branch)..."
           git push public main --force
-          
+
           if [ $? -eq 0 ]; then
             echo ""
             echo "✅✅✅ SUCCESS — Public repo updated successfully!"
