@@ -1,5 +1,51 @@
-env_draw/
-*.pyc
+# ==========================================
+# Python & Flask Specific
+# ==========================================
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
 instance/
 .webassets-cache/
+.env
+.flaskenv
+
+# ==========================================
+# Environments & Dependencies
+# ==========================================
+# Virtual environments
+env/
+venv/
+ENV/
+env_draw/
+.venv/
+
+# Node/Frontend dependencies (if you use npm/yarn for JS/CSS assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.sass-cache/
+
+# ==========================================
+# OS & IDE Clutter
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# IDEs (VS Code, PyCharm)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
