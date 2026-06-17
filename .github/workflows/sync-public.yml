@@ -47,9 +47,10 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.PUBLIC_REPO_TOKEN }}
         with:
           source-directory: '.'
-          destination-github-username: 'PankajChauhanji'   # 🔁 Replace with your GitHub username
-          destination-repository-name: 'DrawHunt'          # 🔁 Replace with your public repo name
-          user-name: 'PankajChauhanji'                     # 🔁 Replace with your GitHub username
-          user-email: 'pankajchauhan.nitsri@gmail.com'     # 🔁 Replace with your GitHub email
+          destination-github-username: 'PankajChauhanji'
+          destination-repository-name: 'DrawHunt'
+          user-name: 'PankajChauhanji'
+          user-email: 'pankajchauhan.nitsri@gmail.com'
           target-branch: main
           commit-message: "sync: update public snapshot"
+          create-target-branch-if-needed: true
