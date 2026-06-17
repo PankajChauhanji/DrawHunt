@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Draw Hunt — a fast-paced multiplayer draw and guess game. Create a room, invite friends, and start drawing!" />
   <title>draw_hunt — room {{ room_code }}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fredoka:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
@@ -58,7 +60,7 @@
     </section>
   </main>
 
-  <main class="board-wrap" id="board-view" style="display:none">
+  <section class="board-wrap" id="board-view" style="display:none">
     <div class="board-head">
       <div class="head-left">
         <span id="round-badge" class="round-badge"></span>
@@ -97,11 +99,12 @@
         </div>
       </aside>
     </div>
-  </main>
+  </section>
 
   <div id="overlay" class="overlay">
     <div id="overlay-body" class="overlay-card"></div>
   </div>
+
   <div class="footer-cta-wrap">
     <p class="footer-cta">If you enjoyed draw_hunt, please <a href="https://github.com/PankajChauhanji/DrawHunt" target="_blank" rel="noreferrer">leave a star on GitHub</a> ⭐ — it keeps the project alive.</p>
   </div>
