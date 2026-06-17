@@ -1,0 +1,55 @@
+name: Sync to Public Repo
+
+on:
+  push:
+    branches:
+      - main  # Change to 'master' if that's your default branch
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch full history
+
+      - name: Remove core game logic and sensitive files
+        run: |
+          # ── Core game engine (room state, scoring, words, player logic) ──
+          rm -f game/room.py
+          rm -f game/manager.py
+
+          # ── Real-time WebSocket handlers (your architecture secret sauce) ──
+          rm -f sockets/director.py
+          rm -f sockets/lobby.py
+          rm -f sockets/gameplay.py
+
+          # ── Environment / secrets (safety net, should already be in .gitignore) ──
+          rm -f .env
+          rm -f .env.*
+
+          # ── What remains (enough to impress, not enough to run) ──
+          # app.py          → shows Flask + SocketIO orchestration skill
+          # static/         → full frontend canvas engine visible
+          # templates/      → Jinja2 UI views visible
+          # requirements.txt → dependency transparency
+          # Procfile        → deployment awareness
+          # images/         → screenshots for README
+          # README.md       → full showcase with live demo link
+
+          echo "✅ Sensitive files removed. Public-safe snapshot ready."
+
+      - name: Push to public repo
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        with:
+          source-directory: '.'
+          destination-github-username: 'PankajChauhanji'   # 🔁 Replace with your GitHub username
+          destination-repository-name: 'DrawHunt'          # 🔁 Replace with your public repo name
+          user-name: 'PankajChauhanji'                     # 🔁 Replace with your GitHub username
+          user-email: 'pankajchauhan.nitsri@gmail.com'     # 🔁 Replace with your GitHub email
+          target-branch: main
+          commit-message: "sync: update public snapshot"
