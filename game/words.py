@@ -1,39 +1,42 @@
 import json
 import random
-import os
+from pathlib import Path
 from typing import List, Optional, Dict, Any
+from config import Config
 
-def load_word_bank(filepath: str = "words.json") -> List[Dict[str, Any]]:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    full_path = os.path.join(base_dir, filepath)
+def load_word_bank() -> List[Dict[str, Any]]:
+    # Resolve absolute path dynamically: root -> data -> json -> words.json
+    PROJECT_ROOT = Path(__file__).parent.parent
+    JSON_FILE_PATH = PROJECT_ROOT / "data" / "json" / Config.WORDS_FILE_NAME
+    
+    # --- AUTO-GENERATION LOGIC ---
+    if not JSON_FILE_PATH.exists():
+        print(f"Warning: {Config.WORDS_FILE_NAME} not found. Auto-generating...")
+        # Import dynamically here to avoid circular imports on startup
+        from game.words_generator import generate_json
+        generate_json()
     
     valid_words = []
     required_keys = {"word", "lang", "themes"}
     
     try:
-        with open(full_path, 'r', encoding='utf-8') as file:
+        with open(JSON_FILE_PATH, 'r', encoding='utf-8') as file:
             raw_data = json.load(file)
             
-        # Validate each entry before adding it to our active pool
+        # Validate each entry before adding it
         for entry in raw_data:
-            # Check if it's a dictionary and has all required keys
             if isinstance(entry, dict) and required_keys.issubset(entry.keys()):
                 valid_words.append(entry)
             else:
-                # You can log this to a file in production, or just print it for debugging
                 print(f"Skipping malformed entry: {entry}")
                 
         return valid_words
         
-    except FileNotFoundError:
-        print(f"Warning: {filepath} not found. Returning empty word bank.")
+    except Exception as e:
+        print(f"CRITICAL WARNING: Failed to load word bank at {JSON_FILE_PATH}. Error: {e}")
         return []
 
 # Initialize the global word bank
-WORD_BANK = load_word_bank()
-
-# ... (pick_random_words and pick_words_with_metadata functions remain exactly the same)
-
 WORD_BANK = load_word_bank()
 
 def pick_choices(n: int, exclude: Optional[set[str]] = None) -> List[str]:
@@ -44,6 +47,10 @@ def pick_choices(n: int, exclude: Optional[set[str]] = None) -> List[str]:
     
     if len(pool) < n:               
         pool = [entry["word"] for entry in WORD_BANK]
+        
+    # Return empty list safely if database is completely empty
+    if not pool:
+        return []
         
     return random.sample(pool, min(n, len(pool)))
 
@@ -68,5 +75,7 @@ def pick_choices_with_metadata(
             if (not lang or e["lang"] == lang) and (not theme or theme in e["themes"])
         ]
         
-    # We no longer need asdict(), we just return the sampled dictionaries directly!
+    if not pool:
+        return []
+        
     return random.sample(pool, min(n, len(pool)))

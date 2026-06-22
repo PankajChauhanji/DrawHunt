@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+from config import Config
 
 # ==========================================
 # 1. ENGLISH WORD BANK
@@ -87,8 +89,18 @@ process_word_dict(HINDI_WORDS, "hin")
 # Convert tracking dictionary to a flat list
 final_word_bank = list(word_tracker.values())
 
-# Export to words.json
-with open('words.json', 'w', encoding='utf-8') as f:
+# Path(__file__) is the words_generator.py file itself.
+# .parent goes up to 'game/', .parent again goes up to 'draw_hunt/' (Project Root)
+PROJECT_ROOT = Path(__file__).parent.parent
+JSON_DIR = PROJECT_ROOT / "data" / "json"
+
+# Create the directories if they don't exist yet (prevents crashes on fresh clones)
+JSON_DIR.mkdir(parents=True, exist_ok=True)
+
+JSON_FILE_PATH = JSON_DIR / Config.WORDS_FILE_NAME
+
+# Export to words.json using the absolute, dynamic path
+with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
     json.dump(final_word_bank, f, indent=2)
 
-print(f"Success! Processed {len(final_word_bank)} distinct words into 'words.json'.")
+print(f"Success! Processed {len(final_word_bank)} distinct words and saved to: {JSON_FILE_PATH}")

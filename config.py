@@ -71,3 +71,6 @@ class Config:
     # "You're close!" nudge: max edit distance that still counts as close.
     CLOSE_DISTANCE_SHORT = 1   # for words up to 4 letters
     CLOSE_DISTANCE_LONG = 2    # for longer words
+
+    # Word bank file name
+    WORDS_FILE_NAME = 'words_bank.json'
