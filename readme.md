@@ -18,7 +18,7 @@ The game is deployed and ready to play right now. Gather a friend, open two tabs
 
 | Welcome Lobby | Live Game Session |
 | :---: | :---: |
-| ![Home Page](images/starter.png) | ![Game Lobby](images/player_lobby.png) |
+| ![Home Page](data/images/starter.png) | ![Game Lobby](data/images/player_lobby.png) |
 
 ---
 
