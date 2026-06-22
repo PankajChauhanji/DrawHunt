@@ -58,49 +58,43 @@ HINDI_WORDS = {
 # ==========================================
 # 3. JSON GENERATOR LOGIC
 # ==========================================
-word_tracker = {}
+def generate_json() -> None:
+    """Parses dictionaries and generates the words JSON file."""
+    word_tracker = {}
 
-def process_word_dict(word_dictionary: dict, lang_code: str):
-    """Parses a dictionary and adds words to the global tracking map."""
-    for theme, word_string in word_dictionary.items():
-        # Split by comma and clean up spaces
-        words = [w.strip() for w in word_string.split(",")]
-        
-        for word in words:
-            if not word: 
-                continue 
-            
-            # If the word is new, initialize it
-            if word not in word_tracker:
-                word_tracker[word] = {
-                    "word": word,
-                    "lang": lang_code,
-                    "themes": [theme]
-                }
-            else:
-                # If word already exists, append the new theme
-                if theme not in word_tracker[word]["themes"]:
-                    word_tracker[word]["themes"].append(theme)
+    def process_word_dict(word_dictionary: dict, lang_code: str):
+        for theme, word_string in word_dictionary.items():
+            words = [w.strip() for w in word_string.split(",")]
+            for word in words:
+                if not word: 
+                    continue 
+                if word not in word_tracker:
+                    word_tracker[word] = {
+                        "word": word,
+                        "lang": lang_code,
+                        "themes": [theme]
+                    }
+                else:
+                    if theme not in word_tracker[word]["themes"]:
+                        word_tracker[word]["themes"].append(theme)
 
-# Run both dictionaries through the processor
-process_word_dict(ENGLISH_WORDS, "eng")
-process_word_dict(HINDI_WORDS, "hin")
+    process_word_dict(ENGLISH_WORDS, "eng")
+    process_word_dict(HINDI_WORDS, "hin")
 
-# Convert tracking dictionary to a flat list
-final_word_bank = list(word_tracker.values())
+    final_word_bank = list(word_tracker.values())
 
-# Path(__file__) is the words_generator.py file itself.
-# .parent goes up to 'game/', .parent again goes up to 'draw_hunt/' (Project Root)
-PROJECT_ROOT = Path(__file__).parent.parent
-JSON_DIR = PROJECT_ROOT / "data" / "json"
+    # Safely resolve dynamic paths
+    PROJECT_ROOT = Path(__file__).parent.parent
+    JSON_DIR = PROJECT_ROOT / "data" / "json"
+    JSON_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Use config for consistency!
+    JSON_FILE_PATH = JSON_DIR / Config.WORDS_FILE_NAME
 
-# Create the directories if they don't exist yet (prevents crashes on fresh clones)
-JSON_DIR.mkdir(parents=True, exist_ok=True)
+    with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
+        json.dump(final_word_bank, f, indent=2)
 
-JSON_FILE_PATH = JSON_DIR / Config.WORDS_FILE_NAME
+    print(f"Success! Processed {len(final_word_bank)} distinct words and saved to: {JSON_FILE_PATH}")
 
-# Export to words.json using the absolute, dynamic path
-with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
-    json.dump(final_word_bank, f, indent=2)
-
-print(f"Success! Processed {len(final_word_bank)} distinct words and saved to: {JSON_FILE_PATH}")
+if __name__ == "__main__":
+    generate_json()
