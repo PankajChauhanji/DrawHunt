@@ -33,7 +33,7 @@
     </section>
 
     <section class="panel settings-panel">
-      <div class="panel-head"><h2>Game settings</h2></div>
+      <div class="panel-head"><h2>Game Settings</h2></div>
       <div class="setting">
         <label for="rounds-select">Rounds</label>
         <select id="rounds-select" class="field">
@@ -41,21 +41,33 @@
         </select>
       </div>
       <div class="setting">
-        <label for="duration-select">Seconds per turn</label>
+        <label for="duration-select">Draw Time</label>
         <select id="duration-select" class="field">
           {% for d in allowed_durations %}<option value="{{ d }}">{{ d }}s</option>{% endfor %}
         </select>
       </div>
       <div class="setting">
-        <label for="wordmode-select">Words</label>
+        <label for="wordmode-select">Word Source</label>
         <select id="wordmode-select" class="field">
           <option value="auto">Automatic — pick from 3</option>
           <option value="own">Drawer types their own</option>
         </select>
       </div>
+
+      <div class="setting toggles">
+        <label class="toggle">
+          <input type="checkbox" id="show-theme-toggle" />
+          <span>Show Theme hint</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="show-language-toggle" />
+          <span>Show Language hint</span>
+        </label>
+      </div>
+
       <p id="settings-note" class="settings-note"></p>
 
-      <button id="start-btn" class="btn btn-primary" style="display:none">Start drawing</button>
+      <button id="start-btn" class="btn btn-primary" style="display:none">Start Game</button>
       <p id="wait-note" class="wait-note" style="display:none">Waiting for the host to start…</p>
     </section>
   </main>
@@ -64,7 +76,10 @@
     <div class="board-head">
       <div class="head-left">
         <span id="round-badge" class="round-badge"></span>
-        <span id="word-bar" class="word-bar">·····</span>
+        <div class="word-area">
+          <span id="word-context" class="word-context"></span>
+          <span id="word-bar" class="word-bar">·····</span>
+        </div>
       </div>
       <div class="head-actions">
         <span id="timer" class="timer"></span>
@@ -78,11 +93,33 @@
           <canvas id="board-canvas"></canvas>
         </div>
         <div class="toolbar">
-          <div id="swatches" class="swatches"></div>
-          <div id="sizes" class="sizes"></div>
-          <div class="tool-actions">
-            <button id="eraser-btn" class="tool-btn" title="Eraser">Eraser</button>
-            <button id="undo-btn" class="tool-btn" title="Undo">Undo</button>
+          <div class="tool-group">
+            <span class="tool-group-label">Colors</span>
+            <div id="swatches" class="swatches"></div>
+          </div>
+
+          <div class="tool-group brush-group">
+            <span class="tool-group-label">Brush</span>
+            <div class="brush-controls">
+              <span id="brush-preview" class="brush-preview" title="Brush preview">
+                <span id="brush-preview-dot" class="brush-preview-dot"></span>
+              </span>
+              <input id="size-slider" class="size-slider" type="range" min="1" max="40" value="6"
+                     aria-label="Brush size" />
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <span class="tool-group-label">Tools</span>
+            <div class="tool-buttons">
+              <button id="brush-btn" class="tool-btn active" title="Brush">🖌️ Brush</button>
+              <button id="bucket-btn" class="tool-btn" title="Fill bucket">🪣 Fill</button>
+              <button id="eraser-btn" class="tool-btn" title="Eraser">🧽 Eraser</button>
+            </div>
+          </div>
+
+          <div class="tool-group actions-group">
+            <button id="undo-btn" class="tool-btn" title="Undo">↶ Undo</button>
             <button id="clear-btn" class="tool-btn danger" title="Clear">Clear</button>
           </div>
         </div>
@@ -94,12 +131,18 @@
           <div id="chat-log" class="chat-log"></div>
           <div class="chat-input-row">
             <input id="chat-input" class="field" maxlength="200" placeholder="Type your guess…" autocomplete="off" />
+            <div class="reaction-wrap">
+              <button id="reaction-btn" class="reaction-btn" type="button" title="React" aria-label="Send a reaction">😊</button>
+              <div id="reaction-picker" class="reaction-picker" role="menu" aria-hidden="true"></div>
+            </div>
             <button id="chat-send" class="btn btn-primary small">Send</button>
           </div>
         </div>
       </aside>
     </div>
   </section>
+
+  <div id="reactions-layer" class="reactions-layer" aria-hidden="true"></div>
 
   <div id="overlay" class="overlay">
     <div id="overlay-body" class="overlay-card"></div>

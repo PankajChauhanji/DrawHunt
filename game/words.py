@@ -39,6 +39,21 @@ def load_word_bank() -> List[Dict[str, Any]]:
 # Initialize the global word bank
 WORD_BANK = load_word_bank()
 
+# Fast lookup: normalized word -> metadata ({"lang", "themes"}). Built once at
+# import. Used by the director to attach theme/language hints to the live word.
+_META_INDEX: Dict[str, Dict[str, Any]] = {
+    entry["word"].strip().lower(): {"lang": entry.get("lang"), "themes": entry.get("themes", [])}
+    for entry in WORD_BANK
+}
+
+
+def lookup_meta(word: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Return {"lang", "themes"} for a bank word, or None for unknown words
+    (e.g. a drawer's own typed word in 'own' mode)."""
+    if not word:
+        return None
+    return _META_INDEX.get(word.strip().lower())
+
 def pick_choices(n: int, exclude: Optional[set[str]] = None) -> List[str]:
     exclude = exclude or set()
     

@@ -7,10 +7,13 @@
  *    ~60 emits/sec max instead of one per raw pointermove.
  *  - Store all coordinates NORMALIZED to 0..1 so every client renders the same
  *    picture regardless of screen size; denormalize only at render time.
- *  - Keep the ordered list of segments so we can replay on resize.
+ *  - Keep the ordered list of ops so we can replay on resize / late join.
+ *  - Flood fill ("bucket") as a raster op recorded by seed point + colour, so
+ *    it replays correctly against whatever was on the canvas at that moment.
  *
- * Segment shape (also the wire format):
- *   { strokeId, color, size, erase, points: [[nx,ny], ...] }
+ * Op shapes (also the wire format):
+ *   stroke: { strokeId, color, size, erase, points: [[nx,ny], ...] }
+ *   fill:   { strokeId, type:"fill", color, x, y }
  * Consecutive segments of one stroke share their boundary point (the client
  * seeds each batch with the last point of the previous batch), so the renderer
  * can draw each segment as an independent polyline and they join seamlessly.
@@ -18,11 +21,19 @@
 window.Board = (function () {
   "use strict";
 
+  function hexToRgb(hex) {
+    const m = /^#([0-9a-fA-F]{6})$/.exec(hex || "");
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
   function create(canvas) {
-    const ctx = canvas.getContext("2d");
-    const ops = [];                 // all segments, in order (for resize replay)
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ops = [];                 // all ops, in order (for resize replay)
     let enabled = true;
-    let tool = { color: "#1f1f1f", size: 6, erase: false };
+    // mode: "brush" | "bucket". erase only applies to brush.
+    let tool = { color: "#1f1f1f", size: 6, erase: false, mode: "brush" };
     let onSegment = function () {};
 
     // logical (CSS px) size of the canvas
@@ -46,6 +57,7 @@ window.Board = (function () {
     }
 
     function renderSegment(seg) {
+      if (seg && seg.type === "fill") { fillAt(seg); return; }
       const pts = seg.points;
       if (!pts || !pts.length) return;
       ctx.globalCompositeOperation = seg.erase ? "destination-out" : "source-over";
@@ -64,6 +76,73 @@ window.Board = (function () {
         ctx.stroke();
       }
       ctx.globalCompositeOperation = "source-over";
+    }
+
+    // ---- flood fill (raster, operates on device pixels) ----
+    function fillAt(seg) {
+      const cw = canvas.width, ch = canvas.height;
+      if (cw < 1 || ch < 1) return;
+      const rgb = hexToRgb(seg.color);
+      if (!rgb) return;
+      let px = Math.round(seg.x * cw);
+      let py = Math.round(seg.y * ch);
+      px = Math.min(cw - 1, Math.max(0, px));
+      py = Math.min(ch - 1, Math.max(0, py));
+      floodFill(cw, ch, px, py, rgb);
+    }
+
+    function floodFill(cw, ch, sx, sy, rgb) {
+      const TOL = 40; // tolerance soaks up anti-aliased edges
+      const img = ctx.getImageData(0, 0, cw, ch);
+      const data = img.data;
+      const start = (sy * cw + sx) * 4;
+      const tr = data[start], tg = data[start + 1], tb = data[start + 2], ta = data[start + 3];
+      const [fr, fg, fb] = rgb;
+
+      // No-op if the seed already matches the fill colour (prevents pointless work).
+      if (Math.abs(tr - fr) <= TOL && Math.abs(tg - fg) <= TOL &&
+          Math.abs(tb - fb) <= TOL && Math.abs(ta - 255) <= TOL) {
+        return;
+      }
+
+      function match(idx) {
+        return Math.abs(data[idx] - tr) <= TOL &&
+               Math.abs(data[idx + 1] - tg) <= TOL &&
+               Math.abs(data[idx + 2] - tb) <= TOL &&
+               Math.abs(data[idx + 3] - ta) <= TOL;
+      }
+      function paint(idx) {
+        data[idx] = fr; data[idx + 1] = fg; data[idx + 2] = fb; data[idx + 3] = 255;
+      }
+
+      // Scanline flood fill: push spans, walk left/right, seed rows above/below.
+      const stack = [[sx, sy]];
+      while (stack.length) {
+        const [x, y0] = stack.pop();
+        let y = y0;
+        // walk up to the top of this column span
+        let idx = (y * cw + x) * 4;
+        while (y >= 0 && match(idx)) { y--; idx -= cw * 4; }
+        y++; idx += cw * 4;
+        let reachLeft = false, reachRight = false;
+        while (y < ch && match(idx)) {
+          paint(idx);
+          // left neighbour
+          if (x > 0) {
+            if (match(idx - 4)) {
+              if (!reachLeft) { stack.push([x - 1, y]); reachLeft = true; }
+            } else { reachLeft = false; }
+          }
+          // right neighbour
+          if (x < cw - 1) {
+            if (match(idx + 4)) {
+              if (!reachRight) { stack.push([x + 1, y]); reachRight = true; }
+            } else { reachRight = false; }
+          }
+          y++; idx += cw * 4;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
     }
 
     // ---- local input ----
@@ -115,9 +194,18 @@ window.Board = (function () {
       return tool.size / W; // normalize brush size by width
     }
 
+    function doFill(e) {
+      const [nx, ny] = normPoint(e);
+      const op = { strokeId: newStrokeId(), type: "fill", color: tool.color, x: nx, y: ny };
+      ops.push(op);
+      renderSegment(op);
+      onSegment(op);
+    }
+
     function onDown(e) {
       if (!enabled) return;
       e.preventDefault();
+      if (tool.mode === "bucket") { doFill(e); return; }
       drawing = true;
       strokeId = newStrokeId();
       lastSeam = null;
@@ -147,9 +235,14 @@ window.Board = (function () {
 
     fit();
 
+    function applyCursor() {
+      canvas.style.cursor = !enabled ? "default"
+        : (tool.mode === "bucket" ? "cell" : "crosshair");
+    }
+
     // ---- public API ----
     return {
-      setTool: function (t) { tool = Object.assign({}, tool, t); },
+      setTool: function (t) { tool = Object.assign({}, tool, t); applyCursor(); },
       onLocalSegment: function (cb) { onSegment = cb || function () {}; },
       // render a segment that came from the network or a replay
       drawSegment: function (seg) { ops.push(seg); renderSegment(seg); },
@@ -161,7 +254,7 @@ window.Board = (function () {
       },
       clear: function () { ops.length = 0; ctx.clearRect(0, 0, W, H); },
       resize: function () { fit(); redrawAll(); },
-      setEnabled: function (v) { enabled = !!v; },
+      setEnabled: function (v) { enabled = !!v; applyCursor(); },
     };
   }
 

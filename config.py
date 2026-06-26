@@ -68,6 +68,22 @@ class Config:
     ALLOWED_WORD_MODES = ["auto", "own"]
     DEFAULT_WORD_MODE = "auto"
 
+    # ---- Contextual hints (host-toggleable) ----
+    # When enabled, guessers see the word's theme and/or language alongside the
+    # masked word, making guessing easier. Off by default (harder = default).
+    DEFAULT_SHOW_THEME = False
+    DEFAULT_SHOW_LANGUAGE = False
+    # Human-readable language names for the codes stored in the word bank.
+    LANG_NAMES = {"eng": "English", "hin": "Hindi"}
+
+    # ---- Reactions (Google-Meet-style floating emojis) ----
+    # Server-side whitelist: only these positive reactions are broadcast.
+    ALLOWED_REACTIONS = [
+        "👍", "❤️", "🔥", "😂", "🎨", "🧠", "🎯",
+        "👎", "🤮", "🍅", "🗑️", "😡", "😤", "🤦",
+        "❓", "🤷", "🥱", "🤡", "💩", "👀"
+        ]
+
     # "You're close!" nudge: max edit distance that still counts as close.
     CLOSE_DISTANCE_SHORT = 1   # for words up to 4 letters
     CLOSE_DISTANCE_LONG = 2    # for longer words

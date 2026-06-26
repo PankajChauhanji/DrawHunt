@@ -28,7 +28,7 @@ from config import Config
 from game.manager import room_manager
 from sockets.common import broadcast_room
 
-log = logging.getLogger("draw_hunt.lobby")
+log = logging.getLogger("pictionary.lobby")
 
 
 def register(socketio):
@@ -89,13 +89,15 @@ def register(socketio):
             else:
                 emit("word_hint", {"mask": room.masked_word(),
                                    "length": len(room.current_word),
-                                   "drawer_id": room.drawer_id})
+                                   "drawer_id": room.drawer_id,
+                                   "context": room.context_hint()})
             emit("turn_start", {"round": room.current_round,
                                 "total_rounds": room.total_rounds,
                                 "drawer_id": room.drawer_id,
                                 "drawer_name": room.players[room.drawer_id].name
                                 if room.drawer_id in room.players else "",
-                                "duration": remaining})
+                                "duration": remaining,
+                                "context": room.context_hint()})
 
         # Reconnecting mid-CHOOSING: the drawer recovers their word choices,
         # everyone else recovers the "X is choosing" indicator.
@@ -142,6 +144,11 @@ def register(socketio):
             room.settings["duration"] = duration
         if word_mode in Config.ALLOWED_WORD_MODES:
             room.settings["word_mode"] = word_mode
+        # Contextual-hint toggles (booleans).
+        if "show_theme" in data:
+            room.settings["show_theme"] = bool(data.get("show_theme"))
+        if "show_language" in data:
+            room.settings["show_language"] = bool(data.get("show_language"))
 
         log.info("settings updated in %s by host: %s", code, room.settings)
         broadcast_room(socketio, room)
@@ -191,6 +198,68 @@ def register(socketio):
         room.state = "LOBBY"
         log.info("room %s returned to lobby by host", code)
         broadcast_room(socketio, room)
+
+    @socketio.on("remove_player")
+    def on_remove_player(data):
+        """Host-only: eject a player from the room. If the ejected player is the
+        current drawer, the director sees them vanish from the roster and skips
+        the turn immediately (no disconnect grace), so an AFK drawer can't stall
+        the whole game."""
+        lookup = room_manager.lookup_sid(request.sid)
+        if not lookup:
+            return emit("room_error", {"message": "You are not in a room."})
+        code, user_id = lookup
+        room = room_manager.get_room(code)
+        if room is None:
+            return emit("room_error", {"message": "Room no longer exists.", "fatal": True})
+        if not room.is_host(user_id):
+            return emit("room_error", {"message": "Only the host can remove players."})
+
+        target_id = (data.get("user_id") or "").strip()
+        if not target_id or target_id == user_id:
+            return  # can't remove yourself; the host leaves via leave_room
+
+        target = room.get_player(target_id)
+        if target is None:
+            return
+        target_name = target.name
+        target_sid = target.sid
+
+        room.remove_player(target_id)
+        log.info("host removed %s (%s) from room %s", target_name, target_id, code)
+
+        # Tell the removed player they were kicked (their client returns home).
+        if target_sid:
+            socketio.emit("kicked", {"by": "host"}, to=target_sid)
+            room_manager.unbind_sid(target_sid)
+            sio_leave(code, sid=target_sid)
+
+        # Announce to the rest and resync the roster.
+        socketio.emit("chat",
+                      {"system": True, "kind": "info",
+                       "message": f"{target_name} was removed by the host."},
+                      to=code)
+        if room.has_connected():
+            broadcast_room(socketio, room)
+
+    @socketio.on("react")
+    def on_react(data):
+        """Broadcast a quick positive reaction to everyone in the room. Only the
+        server-whitelisted emojis are relayed; anything else is dropped."""
+        lookup = room_manager.lookup_sid(request.sid)
+        if not lookup:
+            return
+        code, user_id = lookup
+        room = room_manager.get_room(code)
+        if room is None:
+            return
+        emoji = (data.get("emoji") or "")
+        if emoji not in Config.ALLOWED_REACTIONS:
+            return
+        player = room.get_player(user_id)
+        name = player.name if player else ""
+        socketio.emit("reaction", {"emoji": emoji, "name": name, "user_id": user_id},
+                      to=code)
 
     @socketio.on("leave_room")
     def on_leave_room(data):

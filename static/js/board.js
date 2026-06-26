@@ -1,26 +1,32 @@
 /* BoardView — connects the canvas engine to the socket and the toolbar.
- * Owns no game state; it relays local segments out and applies remote ones.
+ * Owns no game state; it relays local ops out and applies remote ones.
  */
 window.BoardView = (function () {
   "use strict";
 
   const COLORS = [
-    "#1f1f1f", "#e23b3b", "#f59e0b", "#f5d90a",
-    "#2bb24c", "#2b7fff", "#7c3aed", "#d94fa0",
+    "#1f1f1f", "#7a7a7a", "#ffffff", "#e23b3b",
+    "#f59e0b", "#f5d90a", "#2bb24c", "#1f8f4d",
+    "#2b7fff", "#1d4ed8", "#7c3aed", "#d94fa0",
+    "#a0522d", "#f7b8c4",
   ];
-  const SIZES = [3, 6, 12, 24];
 
   function init(opts) {
     const canvas = opts.canvas;
     const socket = opts.socket;
-    const swatchWrap = opts.swatches;
-    const sizeWrap = opts.sizes;
-    const eraserBtn = opts.eraser;
-    const undoBtn = opts.undo;
-    const clearBtn = opts.clear;
+
+    // Toolbar elements (static in game.html).
+    const swatchWrap = document.getElementById("swatches");
+    const sizeSlider = document.getElementById("size-slider");
+    const previewDot = document.getElementById("brush-preview-dot");
+    const brushBtn = document.getElementById("brush-btn");
+    const bucketBtn = document.getElementById("bucket-btn");
+    const eraserBtn = document.getElementById("eraser-btn");
+    const undoBtn = document.getElementById("undo-btn");
+    const clearBtn = document.getElementById("clear-btn");
 
     const board = window.Board.create(canvas);
-    let current = { color: COLORS[0], size: SIZES[1], erase: false };
+    let current = { color: COLORS[0], size: 6, erase: false, mode: "brush" };
     board.setTool(current);
 
     // build colour swatches
@@ -32,7 +38,8 @@ window.BoardView = (function () {
       b.setAttribute("aria-label", "colour " + c);
       b.addEventListener("click", function () {
         current.color = c;
-        current.erase = false;
+        current.erase = false;        // picking a colour leaves the eraser
+        if (current.mode !== "bucket") current.mode = "brush";
         board.setTool(current);
         syncToolbar();
       });
@@ -40,29 +47,30 @@ window.BoardView = (function () {
       swatchWrap.appendChild(b);
     });
 
-    // build size buttons
-    sizeWrap.innerHTML = "";
-    SIZES.forEach(function (s) {
-      const b = document.createElement("button");
-      b.className = "size-btn";
-      b.dataset.size = String(s);
-      const dot = document.createElement("span");
-      dot.className = "size-dot";
-      dot.style.width = dot.style.height = Math.min(s, 20) + "px";
-      b.appendChild(dot);
-      b.addEventListener("click", function () {
-        current.size = s;
+    // brush size slider
+    if (sizeSlider) {
+      sizeSlider.value = String(current.size);
+      sizeSlider.addEventListener("input", function () {
+        current.size = parseInt(sizeSlider.value, 10) || 1;
         board.setTool(current);
         syncToolbar();
       });
-      sizeWrap.appendChild(b);
+    }
+
+    // tool buttons
+    brushBtn.addEventListener("click", function () {
+      current.mode = "brush"; current.erase = false;
+      board.setTool(current); syncToolbar();
+    });
+    bucketBtn.addEventListener("click", function () {
+      current.mode = "bucket"; current.erase = false;
+      board.setTool(current); syncToolbar();
+    });
+    eraserBtn.addEventListener("click", function () {
+      current.mode = "brush"; current.erase = true;
+      board.setTool(current); syncToolbar();
     });
 
-    eraserBtn.addEventListener("click", function () {
-      current.erase = !current.erase;
-      board.setTool(current);
-      syncToolbar();
-    });
     undoBtn.addEventListener("click", function () { socket.emit("undo", {}); });
     clearBtn.addEventListener("click", function () {
       if (confirm("Clear the whole canvas?")) socket.emit("clear_canvas", {});
@@ -72,10 +80,22 @@ window.BoardView = (function () {
       swatchWrap.querySelectorAll(".swatch").forEach(function (el) {
         el.classList.toggle("active", !current.erase && el.dataset.color === current.color);
       });
-      sizeWrap.querySelectorAll(".size-btn").forEach(function (el) {
-        el.classList.toggle("active", Number(el.dataset.size) === current.size);
-      });
+      brushBtn.classList.toggle("active", current.mode === "brush" && !current.erase);
+      bucketBtn.classList.toggle("active", current.mode === "bucket");
       eraserBtn.classList.toggle("active", current.erase);
+      // brush preview: size scaled for display, colour reflects current tool
+      if (previewDot) {
+        const d = Math.max(4, Math.min(28, current.size));
+        previewDot.style.width = d + "px";
+        previewDot.style.height = d + "px";
+        if (current.erase) {
+          previewDot.style.background = "transparent";
+          previewDot.style.border = "2px dashed var(--muted)";
+        } else {
+          previewDot.style.background = current.color;
+          previewDot.style.border = "1px solid rgba(0,0,0,0.15)";
+        }
+      }
     }
     syncToolbar();
 

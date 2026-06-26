@@ -20,7 +20,7 @@ from game import scoring, words
 from game.manager import room_manager
 from sockets.common import broadcast_room
 
-log = logging.getLogger("draw_hunt.director")
+log = logging.getLogger("pictionary.director")
 
 TICK = 0.25
 
@@ -47,11 +47,12 @@ def _build_hint_schedule(word, duration):
 def _emit_hint(socketio, room, drawer_id):
     """Push the updated mask to guessers only (the drawer already knows it)."""
     mask = room.masked_word()
+    context = room.context_hint()
     for p in room.players.values():
         if p.connected and p.user_id != drawer_id:
             socketio.emit("word_hint",
                           {"mask": mask, "length": len(room.current_word),
-                           "drawer_id": drawer_id},
+                           "drawer_id": drawer_id, "context": context},
                           to=p.sid)
     socketio.emit("chat",
                   {"system": True, "kind": "hint", "message": "💡 A letter was revealed"},
@@ -90,11 +91,24 @@ def run_game(socketio, code):
                     break
                 continue
 
-            _run_drawing(socketio, code, drawer_id)
+            _run_drawing_status = _run_drawing(socketio, code, drawer_id)
 
             room = room_manager.get_room(code)
             if not _alive(room):
                 return
+
+            if _run_drawing_status == "skipped":
+                # Drawer left/was removed mid-turn: announce, skip, move on with
+                # no reveal screen and no scoring pause.
+                socketio.emit("chat",
+                              {"system": True, "kind": "info",
+                               "message": "Drawer left — skipping this turn."},
+                              to=code)
+                room.clear_word()
+                socketio.emit("canvas_clear", {}, to=code)
+                if room.advance() == "game_over":
+                    break
+                continue
 
             _run_turn_end(socketio, code)
             socketio.sleep(Config.ROUND_END_PAUSE)
@@ -168,15 +182,17 @@ def _run_drawing(socketio, code, drawer_id):
 
     socketio.emit("canvas_clear", {}, to=code)
     socketio.emit("your_word", {"word": room.current_word}, to=drawer.sid)
+    context = room.context_hint()
     for p in room.players.values():
         if p.connected and p.user_id != drawer_id:
             socketio.emit("word_hint",
                           {"mask": room.masked_word(), "length": len(room.current_word),
-                           "drawer_id": drawer_id},
+                           "drawer_id": drawer_id, "context": context},
                           to=p.sid)
     socketio.emit("turn_start",
                   {"round": room.current_round, "total_rounds": room.total_rounds,
-                   "drawer_id": drawer_id, "drawer_name": drawer.name, "duration": duration},
+                   "drawer_id": drawer_id, "drawer_name": drawer.name, "duration": duration,
+                   "context": context},
                   to=code)
     socketio.emit("chat",
                   {"system": True, "kind": "info", "message": f"{drawer.name} is drawing!"},
@@ -198,15 +214,19 @@ def _run_drawing(socketio, code, drawer_id):
             room.revealed_indices.add(idx)
             _emit_hint(socketio, room, drawer_id)
         if room.all_guessed():
-            return
+            return "ended"
         if elapsed >= duration:
-            return
+            return "ended"
         d = room.players.get(drawer_id)
-        if d is None or not d.connected:
+        if d is None:
+            # Drawer was removed from the room entirely (host kicked them, or
+            # they were swept). End this turn immediately — no grace.
+            return "skipped"
+        if not d.connected:
             # small grace so a drawer's refresh doesn't instantly kill the turn
             drawer_gone_for += TICK
             if drawer_gone_for >= Config.DRAWER_DISCONNECT_GRACE:
-                return
+                return "ended"
         else:
             drawer_gone_for = 0.0
 

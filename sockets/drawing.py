@@ -39,20 +39,41 @@ def _num01(v) -> bool:
 
 
 def _sanitize_segment(data) -> dict | None:
-    """Validate and normalize an incoming draw segment. Returns a clean dict or
-    None if anything is off — malformed input is dropped, never trusted."""
+    """Validate and normalize an incoming draw op. Returns a clean dict or
+    None if anything is off — malformed input is dropped, never trusted.
+
+    Two op shapes are accepted:
+      stroke: {strokeId, color, size, erase, points:[[x,y],...]}
+      fill:   {strokeId, type:"fill", color, x, y}   (flood-fill seed point)
+    """
     if not isinstance(data, dict):
         return None
     stroke_id = data.get("strokeId")
     color = data.get("color")
-    size = data.get("size")
-    erase = bool(data.get("erase", False))
-    points = data.get("points")
-
     if not isinstance(stroke_id, str) or not (1 <= len(stroke_id) <= 64):
         return None
     if not isinstance(color, str) or not _HEX.match(color):
         return None
+
+    # ---- fill op (bucket tool) ----
+    if data.get("type") == "fill":
+        x = data.get("x")
+        y = data.get("y")
+        if not _num01(x) or not _num01(y):
+            return None
+        return {
+            "strokeId": stroke_id,
+            "type": "fill",
+            "color": color,
+            "x": round(float(x), 4),
+            "y": round(float(y), 4),
+        }
+
+    # ---- stroke op (brush / eraser) ----
+    size = data.get("size")
+    erase = bool(data.get("erase", False))
+    points = data.get("points")
+
     if not isinstance(size, (int, float)) or not (0.0 < size <= 0.5):
         return None
     if not isinstance(points, list) or not (1 <= len(points) <= Config.MAX_POINTS_PER_SEGMENT):

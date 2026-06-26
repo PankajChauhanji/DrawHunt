@@ -21,6 +21,8 @@ class Room:
             "rounds": Config.DEFAULT_ROUNDS,
             "duration": Config.ROUND_DURATION,
             "word_mode": Config.DEFAULT_WORD_MODE,
+            "show_theme": Config.DEFAULT_SHOW_THEME,
+            "show_language": Config.DEFAULT_SHOW_LANGUAGE,
         }
         self.created_at = time.time()
         # A freshly created room with nobody in it yet is "empty" from birth,
@@ -39,6 +41,8 @@ class Room:
         # broadcast. Guessers receive a masked pattern; the drawer is told the
         # real word privately.
         self.current_word: str | None = None
+        self.current_lang: str | None = None      # language code of the live word
+        self.current_themes: list[str] = []        # themes of the live word
         self.drawer_id: str | None = None
         self.guessed_order: list[str] = []   # user_ids in the order they guessed
         self.guess_times: dict[str, float] = {}   # user_id -> seconds into the turn when they guessed
@@ -148,9 +152,20 @@ class Room:
         return last_id
 
     # ---------- word / guessing ----------
-    def set_word(self, word: str, drawer_id: str) -> None:
-        """Begin a turn: set the secret word and the drawer, reset who's guessed."""
+    def set_word(self, word: str, drawer_id: str, lang: str | None = None,
+                 themes: list[str] | None = None) -> None:
+        """Begin a turn: set the secret word and the drawer, reset who's guessed.
+        Optionally records the word's language/themes for contextual hints. When
+        not supplied, metadata is resolved from the word bank automatically."""
+        if lang is None and themes is None:
+            from .words import lookup_meta
+            meta = lookup_meta(word)
+            if meta:
+                lang = meta.get("lang")
+                themes = meta.get("themes")
         self.current_word = word
+        self.current_lang = lang
+        self.current_themes = themes or []
         self.drawer_id = drawer_id
         self.guessed_order = []
         self.guess_times = {}
@@ -161,6 +176,8 @@ class Room:
 
     def clear_word(self) -> None:
         self.current_word = None
+        self.current_lang = None
+        self.current_themes = []
         self.drawer_id = None
         self.guessed_order = []
         self.guess_times = {}
@@ -195,6 +212,18 @@ class Room:
             else:
                 slots.append("_")
         return " ".join(slots)
+
+    def context_hint(self) -> dict:
+        """The theme/language hint payload for guessers, gated by the host's
+        toggles. Keys are present only when their setting is enabled (and the
+        word has that metadata), so an off toggle never leaks anything."""
+        from config import Config
+        hint: dict = {}
+        if self.settings.get("show_language") and self.current_lang:
+            hint["language"] = Config.LANG_NAMES.get(self.current_lang, self.current_lang)
+        if self.settings.get("show_theme") and self.current_themes:
+            hint["theme"] = ", ".join(self.current_themes)
+        return hint
 
     def active_guessers(self) -> list:
         """Connected players who are expected to guess (everyone but the drawer)."""

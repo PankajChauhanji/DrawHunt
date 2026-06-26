@@ -20,6 +20,8 @@
   const roundsSel = document.getElementById("rounds-select");
   const durationSel = document.getElementById("duration-select");
   const wordModeSel = document.getElementById("wordmode-select");
+  const showThemeToggle = document.getElementById("show-theme-toggle");
+  const showLangToggle = document.getElementById("show-language-toggle");
   const settingsNote = document.getElementById("settings-note");
   const startBtn = document.getElementById("start-btn");
   const waitNote = document.getElementById("wait-note");
@@ -32,6 +34,7 @@
   const backBtn = document.getElementById("back-to-lobby");
   const sidePlayersEl = document.getElementById("side-players");
   const wordBar = document.getElementById("word-bar");
+  const wordContext = document.getElementById("word-context");
   const roundBadge = document.getElementById("round-badge");
   const timerEl = document.getElementById("timer");
   const toolbarEl = document.querySelector(".toolbar");
@@ -61,29 +64,50 @@
   function renderSidePlayers(state) {
     if (!sidePlayersEl) return;
     sidePlayersEl.innerHTML = "";
-    state.players
-      .slice()
-      .sort(function (a, b) { return b.score - a.score; })
-      .forEach(function (p) {
-        const row = document.createElement("div");
-        row.className =
-          "sp" + (p.has_guessed ? " guessed" : "") + (p.connected ? "" : " offline");
-        const av = document.createElement("span");
-        av.className = "sp-av";
-        av.style.background = colorFor(p.user_id);
-        av.textContent = initials(p.name);
-        const nm = document.createElement("span");
-        nm.className = "sp-name";
-        nm.textContent = p.name + (p.user_id === myUid ? " (you)" : "");
-        const badge = document.createElement("span");
-        badge.className = "sp-badge";
-        badge.textContent = p.is_drawer ? "✏️" : (p.has_guessed ? "✓" : "");
-        const sc = document.createElement("span");
-        sc.className = "sp-score";
-        sc.textContent = p.score;
-        row.append(av, nm, badge, sc);
-        sidePlayersEl.appendChild(row);
-      });
+    const isHost = state.host_id === myUid;
+    const sorted = state.players.slice().sort(function (a, b) { return b.score - a.score; });
+    sorted.forEach(function (p, i) {
+      const row = document.createElement("div");
+      row.className =
+        "sp" + (p.has_guessed ? " guessed" : "") + (p.connected ? "" : " offline");
+      const av = document.createElement("span");
+      av.className = "sp-av";
+      av.style.background = colorFor(p.user_id);
+      av.textContent = initials(p.name);
+      const nm = document.createElement("span");
+      nm.className = "sp-name";
+      nm.textContent = p.name + (p.user_id === myUid ? " (you)" : "");
+      const badge = document.createElement("span");
+      badge.className = "sp-badge";
+      badge.textContent = p.is_drawer ? "✏️" : (p.has_guessed ? "✓" : "");
+      const sc = document.createElement("span");
+      sc.className = "sp-score";
+      sc.textContent = p.score;
+      // lead over the next-ranked player
+      const lead = document.createElement("span");
+      lead.className = "sp-lead";
+      const next = sorted[i + 1];
+      if (next) {
+        const diff = p.score - next.score;
+        lead.textContent = diff > 0 ? "+" + diff : "";
+      }
+      row.append(av, nm, badge, sc, lead);
+      // host kick control (not on self)
+      if (isHost && p.user_id !== myUid) {
+        const kick = document.createElement("button");
+        kick.className = "kick-btn";
+        kick.title = "Remove " + p.name;
+        kick.setAttribute("aria-label", "Remove " + p.name);
+        kick.textContent = "✕";
+        kick.addEventListener("click", function () {
+          if (confirm("Remove " + p.name + " from the game?")) {
+            socket.emit("remove_player", { user_id: p.user_id });
+          }
+        });
+        row.append(kick);
+      }
+      sidePlayersEl.appendChild(row);
+    });
   }
 
   function setConn(state) {
@@ -140,6 +164,19 @@
       if (p.user_id === state.host_id) tags.innerHTML += '<span class="tag host">host</span>';
       if (p.user_id === myUid) tags.innerHTML += '<span class="tag you">you</span>';
       row.append(av, nm, tags);
+      if (isHost && p.user_id !== myUid) {
+        const kick = document.createElement("button");
+        kick.className = "kick-btn";
+        kick.title = "Remove " + p.name;
+        kick.setAttribute("aria-label", "Remove " + p.name);
+        kick.textContent = "✕";
+        kick.addEventListener("click", function () {
+          if (confirm("Remove " + p.name + " from the room?")) {
+            socket.emit("remove_player", { user_id: p.user_id });
+          }
+        });
+        row.append(kick);
+      }
       playersEl.appendChild(row);
     });
     playerCountEl.textContent = connected.length + "/" + cfg.maxPlayers;
@@ -148,9 +185,13 @@
     roundsSel.value = String(state.settings.rounds);
     durationSel.value = String(state.settings.duration);
     if (wordModeSel) wordModeSel.value = state.settings.word_mode || "auto";
+    if (showThemeToggle) showThemeToggle.checked = !!state.settings.show_theme;
+    if (showLangToggle) showLangToggle.checked = !!state.settings.show_language;
     roundsSel.disabled = !isHost;
     durationSel.disabled = !isHost;
     if (wordModeSel) wordModeSel.disabled = !isHost;
+    if (showThemeToggle) showThemeToggle.disabled = !isHost;
+    if (showLangToggle) showLangToggle.disabled = !isHost;
     settingsNote.textContent = isHost
       ? "You're the host — set the rules."
       : "Only the host can change these.";
@@ -192,6 +233,7 @@
       stopTimer();
       if (wordBar) wordBar.textContent = "·····";
       if (roundBadge) roundBadge.textContent = "";
+      setWordContext(null);
     }
   }
 
@@ -203,11 +245,6 @@
       boardCtl = window.BoardView.init({
         canvas: document.getElementById("board-canvas"),
         socket: socket,
-        swatches: document.getElementById("swatches"),
-        sizes: document.getElementById("sizes"),
-        eraser: document.getElementById("eraser-btn"),
-        undo: document.getElementById("undo-btn"),
-        clear: document.getElementById("clear-btn"),
       });
       chatCtl = window.ChatView.init({
         socket: socket,
@@ -288,6 +325,7 @@
     // ---- word state ----
     socket.on("your_word", function (d) {
       setDrawer(true);
+      setWordContext(null);   // the drawer sees the real word; no hint needed
       if (wordBar) {
         wordBar.textContent = "You're drawing: " + d.word;
         wordBar.classList.add("is-drawer");
@@ -295,6 +333,7 @@
     });
     socket.on("word_hint", function (d) {
       setDrawer(false);
+      setWordContext(d.context);
       if (wordBar) {
         wordBar.textContent = d.mask || "·····";
         wordBar.classList.remove("is-drawer");
@@ -376,6 +415,7 @@
       if (d.drawer_id === myUid) return;
       hideOverlay();
       stopTimer();
+      setWordContext(null);
       if (wordBar) {
         wordBar.classList.remove("is-drawer");
         wordBar.textContent = d.drawer_name + " is choosing a word…";
@@ -385,12 +425,15 @@
     socket.on("turn_start", function (d) {
       hideOverlay();
       setDrawer(d.drawer_id === myUid);
+      if (d.drawer_id === myUid) setWordContext(null);
+      else if (d.context) setWordContext(d.context);
       startTimer(d.duration);
     });
 
     socket.on("turn_end", function (d) {
       stopTimer();
       setDrawer(false);
+      setWordContext(null);
       const rows = (function () {
         if (!d.awards || !Object.keys(d.awards).length) return "<p class='overlay-sub'>Nobody guessed it.</p>";
         const names = {};
@@ -464,12 +507,30 @@
       }
     });
 
+    socket.on("kicked", function () {
+      stopTimer();
+      overlayBody.innerHTML =
+        '<h2>Removed from the room</h2>' +
+        '<p class="overlay-sub">The host removed you from this game.</p>' +
+        '<a class="btn btn-primary" href="/">Back to home</a>';
+      overlay.classList.add("show");
+      try { socket.disconnect(); } catch (_) {}
+    });
+
+    socket.on("reaction", function (d) {
+      if (d && d.emoji) spawnReaction(d.emoji);
+    });
+
     // host controls
     roundsSel.addEventListener("change", pushSettings);
     durationSel.addEventListener("change", pushSettings);
     if (wordModeSel) wordModeSel.addEventListener("change", pushSettings);
+    if (showThemeToggle) showThemeToggle.addEventListener("change", pushSettings);
+    if (showLangToggle) showLangToggle.addEventListener("change", pushSettings);
     startBtn.addEventListener("click", function () { socket.emit("start_game", {}); });
     backBtn.addEventListener("click", function () { socket.emit("back_to_lobby", {}); });
+
+    setupReactions();
   }
 
   function escapeHtml(s) {
@@ -483,7 +544,79 @@
       rounds: parseInt(roundsSel.value, 10),
       duration: parseInt(durationSel.value, 10),
       word_mode: wordModeSel ? wordModeSel.value : "auto",
+      show_theme: showThemeToggle ? showThemeToggle.checked : false,
+      show_language: showLangToggle ? showLangToggle.checked : false,
     });
+  }
+
+  // Theme/Language hint shown above the word for guessers (host-toggleable).
+  function setWordContext(ctx) {
+    if (!wordContext) return;
+    if (!ctx || (!ctx.language && !ctx.theme)) {
+      wordContext.textContent = "";
+      wordContext.style.display = "none";
+      return;
+    }
+    const parts = [];
+    if (ctx.language) parts.push("Language: " + ctx.language);
+    if (ctx.theme) parts.push("Theme: " + ctx.theme);
+    wordContext.textContent = parts.join("   ·   ");
+    wordContext.style.display = "";
+  }
+
+  // Reactions: Praise, Dislike, Rage, and Chaos
+  const REACTIONS = [
+    "👍", "❤️", "🔥", "😂", "🎨", "🧠", "🎯",
+    "👎", "🤮", "🍅", "🗑️", "😡", "😤", "🤦",
+    "❓", "🤷", "🥱", "🤡", "💩", "👀"
+  ];
+
+  function setupReactions() {
+    const btn = document.getElementById("reaction-btn");
+    const picker = document.getElementById("reaction-picker");
+    if (!btn || !picker || btn._wired) return;
+    btn._wired = true;
+
+    picker.innerHTML = "";
+    REACTIONS.forEach(function (em) {
+      const b = document.createElement("button");
+      b.className = "reaction-option";
+      b.type = "button";
+      b.textContent = em;
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        socket.emit("react", { emoji: em });
+        closePicker();
+      });
+      picker.appendChild(b);
+    });
+
+    function openPicker() { picker.classList.add("show"); picker.setAttribute("aria-hidden", "false"); }
+    function closePicker() { picker.classList.remove("show"); picker.setAttribute("aria-hidden", "true"); }
+
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (picker.classList.contains("show")) closePicker(); else openPicker();
+    });
+    document.addEventListener("click", function (e) {
+      if (!picker.contains(e.target) && e.target !== btn) closePicker();
+    });
+  }
+
+  function spawnReaction(emoji) {
+    const layer = document.getElementById("reactions-layer");
+    if (!layer) return;
+    const el = document.createElement("span");
+    el.className = "reaction-float";
+    el.textContent = emoji;
+    const left = 28 + Math.random() * 44;          // 28%..72% across the screen
+    const drift = (Math.random() * 2 - 1) * 70;    // sideways wander
+    const dur = 2600 + Math.random() * 900;
+    el.style.left = left + "%";
+    el.style.setProperty("--drift", drift + "px");
+    el.style.setProperty("--dur", dur + "ms");
+    layer.appendChild(el);
+    setTimeout(function () { el.remove(); }, dur + 120);
   }
 
   copyBtn.addEventListener("click", function () {
