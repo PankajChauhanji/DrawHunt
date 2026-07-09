@@ -169,6 +169,7 @@ body[data-conn="disconnected"] .conn-dot { background: var(--coral); box-shadow:
 .word-bar {
   font-family: "Fredoka", sans-serif; font-size: 1.25rem; letter-spacing: 0.18em;
   color: var(--paper); padding: 0.15rem 0.2rem; min-height: 1.6rem;
+  white-space: pre-wrap; word-break: break-word;
 }
 .word-bar.is-drawer { color: var(--amber); letter-spacing: normal; }
 .head-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
