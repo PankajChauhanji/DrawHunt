@@ -14,45 +14,47 @@ ENGLISH_WORDS = {
     "Fruits": "watermelon, pineapple, banana, apple, orange, grape, strawberry, lemon, cherry, peach, pear, kiwi, papaya, avocado, mango, coconut",
     "Desserts": "ice cream, cupcake, donut, cake, pie, cookie, muffin, croissant, pretzel, lollipop, chocolate, marshmallow, pudding, brownie, jelly, popsicle, caramel, crepe, churro, chewing gum, cotton candy, macaron, tart, cheesecake",
     "Drinks": "milk, juice, coffee, tea, soda, wine, honey",
-    "Nature": "mountain, rainbow, volcano, island, waterfall, cactus, snowman, campfire, tornado, tree, flower, grass, leaf, rock, sand, puddle, river, lake, ocean, wave, beach, desert, forest, jungle, cave, cliff, valley, sun, moon, star, cloud, rain, snow, lightning, storm, earthquake, acorn, pinecone, log, twig, pebble, swamp, canyon, iceberg",
+    "Nature": "mountain, rainbow, volcano, island, waterfall, cactus, snowman, campfire, tornado, tree, flower, grass, leaf, rock, sand, puddle, river, lake, ocean, wave, beach, desert, forest, jungle, cave, cliff, valley, sun, moon, cloud, rain, snow, lightning, storm, earthquake, acorn, pinecone, log, twig, pebble, swamp, canyon, iceberg",
     "Places": "bridge, castle, windmill, lighthouse, city, village, street, road, highway, park, garden, farm, barn, house, apartment, skyscraper, tent, garage, driveway, attic, basement, porch, balcony",
     "Vehicles": "airplane, rocket, submarine, helicopter, tractor, sailboat, train, scooter, ambulance, skateboard, car, truck, bus, van, motorcycle, tricycle, unicycle, snowboard, surfboard, boat, ship, ferry, yacht, canoe, kayak, raft, carriage, wagon, cart, sled, bulldozer, crane, taxi, parachute, blimp, hovercraft, jetski, gondola, forklift",
     "Sports": "football, basketball, baseball, tennis, volleyball, golf, hockey, cricket, badminton, boxing, wrestling, fencing, archery, weightlifting, gymnastics, swimming, diving, surfing, sailing, cycling, running, skiing, bowling, billiards, darts, trophy, medal, whistle",
-    "Games": "chess, dice, puzzle, joystick, dartboard, domino, marble, rubiks cube, jigsaw puzzle, video game",
-    "Technology": "computer, laptop, tablet, smartphone, smartwatch, television, radio, speaker, headphones, microphone, printer, keyboard, mouse, monitor, battery, charger, plug, lightbulb, laser, robot, drone, satellite, telescope, microscope, magnet, thermometer, syringe, flask, beaker, tripod, webcam",
-    "History": "dinosaur, fossil, pyramid, mummy, sphinx, chariot, knight, armor, sword, shield, bow, arrow, spear, axe, catapult, king, queen, crown, throne, pirate",
+    "Games": "chess, dice, puzzle, joystick, dartboard, domino, marble, rubiks cube, jigsaw puzzle, video game, checkmate, chessboard, pawn, blitz",
+    "Technology": "computer, laptop, tablet, smartphone, smartwatch, television, radio, speaker, headphones, microphone, printer, keyboard, mouse, monitor, battery, charger, plug, lightbulb, laser, robot, drone, satellite, magnet, thermometer, syringe, flask, beaker, tripod, webcam",
+    "History": "dinosaur, fossil, pyramid, mummy, sphinx, chariot, knight, armor, sword, shield, bow, spear, axe, catapult, king, queen, crown, throne, pirate",
     "Fantasy": "dragon, unicorn, pegasus, mermaid, centaur, cyclops, troll, goblin, fairy, ghost, vampire, werewolf, zombie, witch, wizard, potion, broomstick, cauldron, griffin, phoenix, kraken, medusa, minotaur, genie, yeti, sasquatch, leprechaun, wand",
-    "Professions": "doctor, chef, police, teacher, farmer, astronaut, pilot, painter, singer, magician, clown, judge, thief, ninja, diver, barber, tailor, photographer, mechanic, firefighter, plumber, scientist, baker, soldier, detective, waiter, dentist, postman, butcher",
+    "Professions": "doctor, chef, police, teacher, farmer, pilot, painter, magician, clown, judge, thief, ninja, diver, barber, tailor, photographer, mechanic, firefighter, plumber, scientist, baker, soldier, detective, waiter, dentist, postman, butcher",
     "Body Parts": "eye, nose, mouth, ear, hair, hand, foot, arm, leg, finger, toe, thumb, nail, tooth, tongue, brain, heart, bone, skull, footprint, handprint, mustache, beard, lips",
-    "Music": "guitar, piano, drum, flute, violin, trumpet, saxophone, harp, microphone, headphones, speaker, cassette, radio, gramophone, conductor, singer, whistle, boombox, banjo, cello, tuba, trombone, xylophone, accordion, ukulele, maracas, tambourine, gong, bagpipes, didgeridoo, kazoo",
+    "Music": "guitar, piano, drum, flute, violin, trumpet, saxophone, harp, cassette, gramophone, conductor, singer, boombox, banjo, cello, tuba, trombone, xylophone, accordion, ukulele, maracas, tambourine, gong, bagpipes, didgeridoo, kazoo",
     "Art": "palette, paintbrush, clay, origami, easel, canvas, sketchbook, painting",
     "House": "bed, bathtub, toilet, sink, oven, dishwasher, fireplace, chimney, window, door, stairs, roof, fence, mailbox, doorknob, hanger, plunger, toothpaste, bookshelf, carpet, curtain, radiator, thermostat, doorbell, doormat, lampshade, mattress, nightstand, chandelier, birdhouse, hammock, toaster, blender, microwave, fridge, couch, rug, sponge, broom, mop, trashcan",
-    "Objects": "umbrella, ladder, candle, bicycle, anchor, balloon, camera, clock, envelope, glasses, hammer, lamp, mirror, pencil, scissors, spoon, telephone, toothbrush, wallet, basket, bucket, button, compass, drum, feather, spectacles, key, lock, backpack, teapot, iron, comb, towel, soap, needle, matchbox, knife, fork, plate, bowl, cup, bottle, vase, watch, ring, necklace, earring, hat, cap, scarf, gloves, socks, shoes, boots, slippers, belt, tie, book, notebook, newspaper, calendar, map, globe, pillow, blanket, chair, table, sofa, tape, stapler, paperclip, clipboard, highlighter, purse, coin",
+    "Objects": "umbrella, ladder, candle, bicycle, anchor, balloon, camera, clock, envelope, glasses, hammer, lamp, mirror, pencil, scissors, spoon, telephone, toothbrush, wallet, basket, bucket, button, compass, feather, spectacles, key, lock, backpack, teapot, iron, comb, towel, soap, needle, matchbox, knife, fork, plate, bowl, cup, bottle, vase, watch, ring, necklace, earring, hat, cap, scarf, gloves, socks, shoes, boots, slippers, belt, tie, book, notebook, newspaper, calendar, map, globe, pillow, blanket, chair, table, sofa, tape, stapler, paperclip, clipboard, highlighter, purse, coin",
     "Tools": "wrench, screwdriver, pliers, saw, drill, hardhat, brick, cement, wheelbarrow, chainsaw, anvil, bolt, screw, clamp, crowbar, mallet, pickaxe, pitchfork, rake, shovel, trowel, scaffolding, jackhammer, toolbox, sandpaper",
     "Clothing": "sweater, jacket, sandals, heels, sunglasses, bracelet, tiara, bowtie, overalls, tuxedo, pajamas, raincoat, apron, helmet, zipper, pocket, shoelace, vest, badge, underwear, swimsuit, bikini, earmuffs, mittens, suspenders, bathrobe, hoodie, poncho",
-    "Toys": "teddy bear, doll, lego, yoyo, kite, slingshot, swing, slide, seesaw, trampoline, binoculars, boomerang, frisbee, pogo stick, hula hoop, unicycle",
-    "Space": "astronaut, alien, ufo, rocket, satellite, rover, observatory, telescope, galaxy, black hole, meteor, spacesuit",
+    "Toys": "teddy bear, doll, lego, yoyo, kite, slingshot, swing, slide, seesaw, trampoline, binoculars, boomerang, frisbee, pogo stick, hula hoop",
+    "Space": "astronaut, telescope, alien, ufo, rocket, satellite, rover, observatory, galaxy, black hole, meteor, spacesuit",
     "Science": "dna, test tube, beaker, bunsen burner, goggles, petri dish, syringe, thermometer, atom",
-    "Shapes": "circle, square, triangle, heart, diamond, cross, arrow, spiral, zigzag, infinity, checkmark, star, crescent, hexagon, octagon, pentagon, oval, cylinder, cube, pyramid",
-    "Actions": "running, jumping, swimming, sleeping, crying, laughing, singing, dancing, fishing, cooking, reading, painting, climbing, digging, flying, falling, hugging, kissing, kicking, punching, sneezing, yawning, pointing, waving, clapping, juggling, crawling"
+    "Shapes": "circle, square, triangle, diamond, cross, arrow, spiral, zigzag, infinity, checkmark, star, crescent, hexagon, octagon, pentagon, oval, cylinder, cube",
+    "Actions": "running, jumping, swimming, sleeping, crying, laughing, singing, dancing, fishing, cooking, reading, painting, climbing, digging, flying, falling, hugging, kissing, kicking, punching, sneezing, yawning, pointing, waving, clapping, juggling, crawling",
+    "Finance & Business": "bank, stock market, portfolio, graph, calculator, briefcase, meeting, contract, chart",
+    "Cinema & Action": "heist, spy, assassin, vault, handcuffs, clapperboard, popcorn, director"
 }
 
 # ==========================================
 # 2. HINDI / INDIAN CONTEXT WORD BANK
 # ==========================================
 HINDI_WORDS = {
-    "Food": "samosa, chai, jalebi, dosa, idli, thali, chapati, pani puri, bhel puri, pav bhaji, chole bhature, paratha, thepla, dhokla, momos, kachori, pakora, biryani, khichdi, papad, achar, chutney, ghee, besan, kathi roll, kulcha, mathri, fafda, khandvi, appam, puttu, upma, poha, sabudana, makhana, paan, supari, lassi, paneer, naan, bhatura, roti",
+    "Food": "jalebi, idli, thali, pani puri, bhel puri, pav bhaji, chole bhature, paratha, thepla, dhokla, momos, kachori, pakora, khichdi, papad, achar, chutney, ghee, besan, kathi roll, kulcha, mathri, fafda, khandvi, appam, puttu, upma, poha, sabudana, makhana, paan, supari, lassi, bhatura, dal tadka, bhindi, chapati, samosa, chai, dosa, paneer, naan, biryani, roti",
     "Desserts": "kulfi, gulab jamun, vada pav, rasgulla, rasmalai, peda, soan papdi, ghevar, chamcham, boondi, petha, gujiya, falooda, gajak, chikki, malpua, shrikhand, halwa, laddu, barfi, modak",
-    "House": "jhula, charpai, matka, belan, chakla, tawa, kadhai, balti, lota, channi, silbatta, okhli, katori, chamcha, jhadu, pocha, tokri, machhardani, chatai, palang, takiya, rajai, kambal, mudda, bartan, dabba, sandasi, karchhi, patila, bhagona, kalsa",
-    "Objects": "diya, rangoli, kite, bindi, bangles, mehndi, tandoor, charkha, kalash, agarbatti, lifafa, tijori, chata, aaina, kanghi, sindoor, kajal, alta, mela, phataka, anaar, chakri, phuljhadi, dhoop, kapoor, hookah, rumal, potli, batwa, pichkari, rakhi, dandiya, lattu, chimta",
-    "Clothing": "turban, saree, dhoti, pagdi, sherwani, kurti, dupatta, petticoat, salwar, kameez, lungi, gamcha, safa, jutti, ghagra, choli, mangalsutra, nath, jhumka, choodi, bajuband, kamarband, gajra, mojari, bichhiya, maang tikka, burqa, kurta, lehenga, ghoonghat",
-    "Culture & Religion": "ganesha, puja, aarti, prasad, havan, kund, chandan, haldi, kumkum, moli, rudraksh, mala, shankh, ghanti, trishul, damaru, pandal, murti, holika, gulal, dahi handi, garba, bhangra, kathputli, namaste",
-    "Vehicles": "auto rickshaw, rickshaw, auto, thela, tonga, bailgadi, hathgadi, doli, palki, rath, naav",
-    "Music": "tabla, sitar, ghunghroo, harmonium, dholak, bansuri, ektara, sarangi, dhol, nagada, shehnai, pungi, been, payal",
+    "House": "jhula, charpai, matka, belan, chakla, tawa, kadhai, balti, lota, channi, jhadu, pocha, tokri, chatai, palang, takiya, rajai, kambal, mudda, bartan, dabba, patila",
+    "Objects": "diya, rangoli, patang, bindi, kangan, mehndi, tandoor, charkha, kalash, agarbatti, lifafa, tijori, chata, aaina, kanghi, sindoor, kajal, alta, mela, phataka, anaar, chakri, phuljhadi, dhoop, kapoor, hookah, rumal, potli, batwa, pichkari, rakhi, dandiya, lattu, chimta",
+    "Clothing": "saree, dhoti, pagdi, sherwani, kurti, dupatta, salwar, kameez, lungi, gamcha, safa, jutti, ghagra, choli, mangalsutra, nath, jhumka, choodi, gajra, mojari, maang tikka, burqa, kurta, lehenga, ghoonghat",
+    "Culture & Religion": "ganesh, puja, aarti, prasad, havan, chandan, haldi, kumkum, rudraksh, mala, shankh, ghanti, trishul, damaru, pandal, murti, holika, gulal, dahi handi, garba, bhangra, kathputli, namaste",
+    "Vehicles": "auto, riksha, thela, tonga, bailgadi, hathgadi, doli, palki, rath, naav",
+    "Music": "tabla, sitar, ghunghroo, harmonium, dholak, bansuri, dhol, nagada, shehnai, payal",
     "Places": "taj mahal, india gate, khet, bagicha, maidan, nukkad, chauraha, gali, haweli, kuan, nahar, aangan, chhat",
-    "Tools": "kulhadi, phawda, kudal, khurpi, darati, hathodi",
-    "Nature": "banyan tree, lotus, marigold, tulsi, neem, peepal, pudina, dhania, nimbu, pyaj, lahsun, adrak, mirchi, tamatar, aaloo, baingan, karela, bhindi, lauki, kaddu, mooli, gajar, matar",
-    "Animals": "peacock, kauwa, kabootar, tota, mor, macchar, makkhi, chhipkali, chuha, bandar, bhalu, hathi, sher, lomdi, hiran, gai, bhains, bakri, bhed, gadha, ghoda, unt, kutta, billi"
+    "Tools": "kulhadi, phawda, kudal, hathodi",
+    "Nature": "bargad, kamal, genda, tulsi, neem, peepal, pudina, dhania, nimbu, pyaj, lahsun, adrak, mirchi, tamatar, aaloo, baingan, karela, lauki, kaddu, mooli, gajar, matar",
+    "Animals": "kauwa, kabootar, tota, mor, macchar, makkhi, chhipkali, chuha, bandar, bhalu, hathi, sher, lomdi, hiran, gai, bhains, bakri, bhed, gadha, ghoda, unt, kutta, billi"
 }
 
 # ==========================================
