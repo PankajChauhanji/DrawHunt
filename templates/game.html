@@ -133,7 +133,55 @@
             <input id="chat-input" class="field" maxlength="200" placeholder="Type your guess…" autocomplete="off" />
             <div class="reaction-wrap">
               <button id="reaction-btn" class="reaction-btn" type="button" title="React" aria-label="Send a reaction">😊</button>
-              <div id="reaction-picker" class="reaction-picker" role="menu" aria-hidden="true"></div>
+              <div id="reaction-picker" class="reaction-picker" role="menu" aria-hidden="true">
+                <!-- Recently Used Section -->
+                <div class="rx-recent-container" id="rx-recent-container" style="display:none">
+                  <div class="rx-recent-label">Recent</div>
+                  <div class="rx-recent-grid" id="rx-recent-grid"></div>
+                  <div class="rx-divider" id="rx-recent-divider"></div>
+                </div>
+                <!-- Combined Emojis Grid -->
+                <div class="rx-grid" id="rx-main-grid">
+                  <button class="rx" type="button" data-e="🤡" title="Clown">🤡</button>
+                  <button class="rx" type="button" data-e="💀" title="Dead/RIP">💀</button>
+                  <button class="rx" type="button" data-e="🤫" title="Shh">🤫</button>
+                  <button class="rx" type="button" data-e="🥱" title="Boring">🥱</button>
+                  <button class="rx" type="button" data-e="💩" title="Poop">💩</button>
+                  <button class="rx" type="button" data-e="👶" title="Baby">👶</button>
+                  <button class="rx" type="button" data-e="🍿" title="Popcorn">🍿</button>
+                  <button class="rx" type="button" data-e="🐔" title="Chicken">🐔</button>
+                  <button class="rx" type="button" data-e="🦖" title="Dinosaur/Slow">🦖</button>
+                  <button class="rx" type="button" data-e="🤦" title="Facepalm">🤦</button>
+                  <button class="rx" type="button" data-e="🤥" title="Liar">🤥</button>
+                  <button class="rx" type="button" data-e="🐌" title="Snail">🐌</button>
+                  <button class="rx" type="button" data-e="🤏" title="Small">🤏</button>
+                  <button class="rx" type="button" data-e="🚮" title="Trash">🚮</button>
+                  <button class="rx" type="button" data-e="👎" title="Thumbs Down">👎</button>
+                  <button class="rx" type="button" data-e="😂" title="Laugh">😂</button>
+                  <button class="rx" type="button" data-e="🤯" title="Mind Blown">🤯</button>
+                  <button class="rx" type="button" data-e="🔥" title="Nice Move">🔥</button>
+                  <button class="rx" type="button" data-e="⚡" title="Speed Up">⚡</button>
+                  <button class="rx" type="button" data-e="🎉" title="Celebration">🎉</button>
+                  <button class="rx" type="button" data-e="😲" title="Surprise">😲</button>
+                  <button class="rx" type="button" data-e="😭" title="Cry">😭</button>
+                  <button class="rx" type="button" data-e="😡" title="Anger">😡</button>
+                  <button class="rx" type="button" data-e="👏" title="Good Game">👏</button>
+                  <button class="rx" type="button" data-e="😎" title="Smooth Move">😎</button>
+                  <!-- Drawing Specific -->
+                  <button class="rx" type="button" data-e="👍" title="Thumbs Up">👍</button>
+                  <button class="rx" type="button" data-e="❤️" title="Love">❤️</button>
+                  <button class="rx" type="button" data-e="🎨" title="Artist">🎨</button>
+                  <button class="rx" type="button" data-e="🧠" title="Big Brain">🧠</button>
+                  <button class="rx" type="button" data-e="🎯" title="Bullseye">🎯</button>
+                  <button class="rx" type="button" data-e="🤮" title="Barf">🤮</button>
+                  <button class="rx" type="button" data-e="🍅" title="Tomato">🍅</button>
+                  <button class="rx" type="button" data-e="🗑️" title="Trash Can">🗑️</button>
+                  <button class="rx" type="button" data-e="😤" title="Triumph">😤</button>
+                  <button class="rx" type="button" data-e="❓" title="Confused">❓</button>
+                  <button class="rx" type="button" data-e="🤷" title="Shrug">🤷</button>
+                  <button class="rx" type="button" data-e="👀" title="Eyes">👀</button>
+                </div>
+              </div>
             </div>
             <button id="chat-send" class="btn btn-primary small">Send</button>
           </div>

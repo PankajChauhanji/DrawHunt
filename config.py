@@ -79,10 +79,14 @@ class Config:
     # ---- Reactions (Google-Meet-style floating emojis) ----
     # Server-side whitelist: only these positive reactions are broadcast.
     ALLOWED_REACTIONS = [
-        "👍", "❤️", "🔥", "😂", "🎨", "🧠", "🎯",
-        "👎", "🤮", "🍅", "🗑️", "😡", "😤", "🤦",
-        "❓", "🤷", "🥱", "🤡", "💩", "👀"
-        ]
+        # From Super Seven
+        "😂", "😲", "🤯", "😭", "😡", "🔥", "⚡", "👏", "😎", "🎉",
+        "🤡", "💀", "🤫", "🥱", "💩", "👶", "🍿", "🐔", "🦖", "🤦",
+        "🤥", "🐌", "🤏", "🚮", "👎",
+        # Draw Hunt Specific
+        "👍", "❤️", "🎨", "🧠", "🎯", "🤮", "🍅", "🗑️", "😤", "❓",
+        "🤷", "👀"
+    ]
 
     # "You're close!" nudge: max edit distance that still counts as close.
     CLOSE_DISTANCE_SHORT = 1   # for words up to 4 letters

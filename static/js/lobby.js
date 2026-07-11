@@ -518,7 +518,7 @@
     });
 
     socket.on("reaction", function (d) {
-      if (d && d.emoji) spawnReaction(d.emoji);
+      if (d && d.emoji) spawnReaction(d.emoji, d.name);
     });
 
     // host controls
@@ -564,12 +564,53 @@
     wordContext.style.display = "";
   }
 
-  // Reactions: Praise, Dislike, Rage, and Chaos
-  const REACTIONS = [
-    "👍", "❤️", "🔥", "😂", "🎨", "🧠", "🎯",
-    "👎", "🤮", "🍅", "🗑️", "😡", "😤", "🤦",
-    "❓", "🤷", "🥱", "🤡", "💩", "👀"
-  ];
+  function getRecentReactions() {
+    try {
+      return JSON.parse(localStorage.getItem("draw_hunt_recent_rx")) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function addRecentReaction(emoji) {
+    let recent = getRecentReactions();
+    recent = recent.filter(e => e !== emoji);
+    recent.unshift(emoji);
+    if (recent.length > 5) recent.pop();
+    localStorage.setItem("draw_hunt_recent_rx", JSON.stringify(recent));
+    updateRecentGrid();
+  }
+
+  function updateRecentGrid() {
+    const rxRecentContainer = document.getElementById("rx-recent-container");
+    const rxRecentGrid = document.getElementById("rx-recent-grid");
+    const btn = document.getElementById("reaction-btn");
+    if (!rxRecentContainer || !rxRecentGrid) return;
+    const recent = getRecentReactions();
+    if (btn && recent.length > 0) {
+      btn.textContent = recent[0];
+    }
+    if (recent.length === 0) {
+      rxRecentContainer.style.display = "none";
+      return;
+    }
+    rxRecentContainer.style.display = "flex";
+    rxRecentGrid.innerHTML = "";
+    recent.forEach((emoji) => {
+      const b = document.createElement("button");
+      b.className = "rx";
+      b.type = "button";
+      b.dataset.e = emoji;
+      b.title = emoji;
+      b.textContent = emoji;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        socket.emit("react", { emoji });
+        addRecentReaction(emoji);
+      });
+      rxRecentGrid.appendChild(b);
+    });
+  }
 
   function setupReactions() {
     const btn = document.getElementById("reaction-btn");
@@ -577,38 +618,71 @@
     if (!btn || !picker || btn._wired) return;
     btn._wired = true;
 
-    picker.innerHTML = "";
-    REACTIONS.forEach(function (em) {
-      const b = document.createElement("button");
-      b.className = "reaction-option";
-      b.type = "button";
-      b.textContent = em;
-      b.addEventListener("click", function (e) {
-        e.stopPropagation();
-        socket.emit("react", { emoji: em });
-        closePicker();
-      });
-      picker.appendChild(b);
-    });
+    let lastClickTime = 0;
+    let clickTimeout = null;
 
-    function openPicker() { picker.classList.add("show"); picker.setAttribute("aria-hidden", "false"); }
-    function closePicker() { picker.classList.remove("show"); picker.setAttribute("aria-hidden", "true"); }
-
-    btn.addEventListener("click", function (e) {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (picker.classList.contains("show")) closePicker(); else openPicker();
+      const now = Date.now();
+      const diff = now - lastClickTime;
+      lastClickTime = now;
+
+      if (diff < 300) {
+        // Double click / rapid-fire spam
+        if (clickTimeout) {
+          clearTimeout(clickTimeout);
+          clickTimeout = null;
+        }
+        const recent = getRecentReactions();
+        const emoji = recent[0] || "👍";
+        socket.emit("react", { emoji });
+        addRecentReaction(emoji);
+      } else {
+        // Single click (with delay to distinguish from double click)
+        clickTimeout = setTimeout(() => {
+          clickTimeout = null;
+          picker.classList.toggle("show");
+          const isShow = picker.classList.contains("show");
+          picker.setAttribute("aria-hidden", !isShow);
+          if (isShow) {
+            updateRecentGrid();
+          }
+        }, 220);
+      }
     });
-    document.addEventListener("click", function (e) {
-      if (!picker.contains(e.target) && e.target !== btn) closePicker();
+
+    picker.querySelectorAll("#rx-main-grid .rx").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const emoji = b.dataset.e;
+        socket.emit("react", { emoji });
+        addRecentReaction(emoji);
+      });
     });
+
+    document.addEventListener("click", (e) => {
+      if (!picker.contains(e.target) && e.target !== btn) {
+        picker.classList.remove("show");
+        picker.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    // Initialize recent grid/btn
+    updateRecentGrid();
   }
 
-  function spawnReaction(emoji) {
+  function spawnReaction(emoji, name) {
     const layer = document.getElementById("reactions-layer");
     if (!layer) return;
-    const el = document.createElement("span");
+    const el = document.createElement("div");
     el.className = "reaction-float";
     el.textContent = emoji;
+    if (name) {
+      const tag = document.createElement("span");
+      tag.className = "rx-name";
+      tag.textContent = name;
+      el.appendChild(tag);
+    }
     const left = 28 + Math.random() * 44;          // 28%..72% across the screen
     const drift = (Math.random() * 2 - 1) * 70;    // sideways wander
     const dur = 2600 + Math.random() * 900;
